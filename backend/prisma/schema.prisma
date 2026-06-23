@@ -1,0 +1,410 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  DIRETOR
+  GESTOR_ADMIN
+  GESTOR_PRODUCAO
+  GERENTE_OPERACIONAL
+  VENDEDOR
+  COMPRADOR
+  FINANCEIRO
+  FISCAL
+  PRODUCAO
+  ALMOXARIFE
+  RH
+  MANUTENCAO
+  MARKETING
+  LOJA_PECAS
+  EXPEDICAO
+}
+
+enum Setor {
+  DIRETORIA
+  ADMINISTRATIVO
+  MARKETING
+  VENDAS
+  COMPRAS
+  FINANCEIRO
+  FISCAL
+  RH
+  PRODUCAO_INOX
+  CALDEIRARIA
+  USINAGEM
+  ELETRICA
+  MONTAGEM_AUTOMATIZADA
+  ALMOXARIFADO_GERAL
+  ALMOXARIFADO_CONSUMIVEIS
+  LOJA_PECAS
+  MANUTENCAO
+  EXPEDICAO
+  TI
+}
+
+enum StatusPedido {
+  AGUARDANDO_FINANCEIRO
+  FINANCEIRO_APROVADO
+  EM_PRODUCAO
+  AGUARDANDO_EXPEDICAO
+  EXPEDIDO
+  ENTREGUE
+  CANCELADO
+}
+
+enum StatusOS {
+  GERADA
+  DISTRIBUIDA_FISICAMENTE
+  DISTRIBUIDA_VIRTUALMENTE
+  EM_ANDAMENTO
+  AGUARDANDO_PECAS
+  EM_TESTE
+  CONCLUIDA
+  EXPEDIDA
+}
+
+enum StatusCompra {
+  SOLICITADO
+  CIENTE
+  COTANDO
+  PEDIDO_REALIZADO
+  EM_TRANSITO
+  RECEBIDO
+  CANCELADO
+}
+
+enum TipoEstoque {
+  MATERIA_PRIMA_BRUTA
+  PECA_PRONTA
+  CONSUMIVEL
+  EPI
+}
+
+enum StatusManutencao {
+  ABERTO
+  EM_ANALISE
+  AGUARDANDO_PECAS
+  EM_ATENDIMENTO
+  CONCLUIDO
+  CANCELADO
+}
+
+enum TipoNotificacao {
+  NOVO_PEDIDO
+  OS_GERADA
+  OS_DISTRIBUIDA
+  COMPRA_SOLICITADA
+  COMPRA_PRAZO
+  FOTO_SOLICITADA
+  CHECKLIST_PENDENTE
+  MANUTENCAO_SOLICITADA
+  EXPEDICAO_PENDENTE
+  FINANCEIRO_CONFIRMAR
+  FISCAL_NOTA
+  RH_EPI
+  GERAL
+}
+
+enum TipoChecklist {
+  COMERCIAL_VENDEDOR
+  DISTRIBUICAO_OS
+  FOTO_PRODUCAO
+  ORGANIZACAO_SEXTA
+  TORNO_SEXTA
+  USINAGEM_PECA
+  EPI
+  COMPRA_REALIZADA
+}
+
+model Usuario {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  cargo     String
+  setor     Setor
+  role      Role     @default(PRODUCAO)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pedidosVendidos     Pedido[]       @relation("Vendedor")
+  osDistribuidas      OS[]           @relation("Distribuidor")
+  notificacoes        Notificacao[]
+  respostasChecklist  ChecklistResposta[]
+  fotos               Foto[]
+  episEntregues       EpiEntrega[]   @relation("FuncionarioEpi")
+  episEntregadosPor   EpiEntrega[]   @relation("EntregadorEpi")
+  comprasResponsavel  Compra[]
+  manutencoesTecnico  Manutencao[]
+}
+
+model Cliente {
+  id        String   @id @default(cuid())
+  nome      String
+  cidade    String
+  estado    String
+  telefone  String?
+  email     String?
+  cpfCnpj   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pedidos     Pedido[]
+  manutencoes Manutencao[]
+}
+
+model Pedido {
+  id                   String       @id @default(cuid())
+  numero               String       @unique
+  clienteId            String
+  cliente              Cliente      @relation(fields: [clienteId], references: [id])
+  vendedorId           String
+  vendedor             Usuario      @relation("Vendedor", fields: [vendedorId], references: [id])
+  equipamento          String
+  modelo               String
+  opcionais            String?
+  personalizacoes      String?
+  condicaoPagamento    String
+  prazoEntrega         DateTime
+  voltagem             String?
+  embalagem            String?
+  valorTotal           Float
+  status               StatusPedido @default(AGUARDANDO_FINANCEIRO)
+  observacoesTecnicas  String?
+  observacoesComerciais String?
+  contratoAssinado     Boolean      @default(false)
+  comprovanteSinal     String?
+  checklistComercial   Boolean      @default(false)
+  pagamentoConfirmado  Boolean      @default(false)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  os           OS[]
+  notificacoes Notificacao[]
+}
+
+model OS {
+  id                 String    @id @default(cuid())
+  numero             String    @unique
+  pedidoId           String
+  pedido             Pedido    @relation(fields: [pedidoId], references: [id])
+  distribuidorId     String?
+  distribuidor       Usuario?  @relation("Distribuidor", fields: [distribuidorId], references: [id])
+  status             StatusOS  @default(GERADA)
+  dataEntregaFisica  DateTime?
+  dataEnvioVirtual   DateTime?
+  observacoes        String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  setoresOS    SetorOS[]
+  checklists   Checklist[]
+  fotos        Foto[]
+  compras      Compra[]
+  notificacoes Notificacao[]
+}
+
+model SetorOS {
+  id              String    @id @default(cuid())
+  osId            String
+  os              OS        @relation(fields: [osId], references: [id])
+  setor           Setor
+  responsavel     String
+  recebeuFisico   Boolean   @default(false)
+  recebeuVirtual  Boolean   @default(false)
+  dataRecebimento DateTime?
+  pessoaRecebeu   String?
+  createdAt       DateTime  @default(now())
+}
+
+model Checklist {
+  id          String        @id @default(cuid())
+  osId        String?
+  os          OS?           @relation(fields: [osId], references: [id])
+  tipo        TipoChecklist
+  setor       Setor
+  dataHora    DateTime      @default(now())
+  responsavel String
+  concluido   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+
+  itens     ChecklistItem[]
+  respostas ChecklistResposta[]
+  fotos     Foto[]
+}
+
+model ChecklistItem {
+  id          String    @id @default(cuid())
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id])
+  descricao   String
+  obrigatorio Boolean   @default(true)
+  ordem       Int
+
+  respostas ChecklistResposta[]
+}
+
+model ChecklistResposta {
+  id          String    @id @default(cuid())
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id])
+  itemId      String?
+  item        ChecklistItem? @relation(fields: [itemId], references: [id])
+  usuarioId   String
+  usuario     Usuario   @relation(fields: [usuarioId], references: [id])
+  resposta    Boolean
+  observacao  String?
+  dataHora    DateTime  @default(now())
+}
+
+model Foto {
+  id            String    @id @default(cuid())
+  osId          String?
+  os            OS?       @relation(fields: [osId], references: [id])
+  checklistId   String?
+  checklist     Checklist? @relation(fields: [checklistId], references: [id])
+  usuarioId     String
+  usuario       Usuario   @relation(fields: [usuarioId], references: [id])
+  setor         Setor
+  url           String
+  descricao     String?
+  numeroPedido  String?
+  nomeCliente   String?
+  cidadeCliente String?
+  createdAt     DateTime  @default(now())
+}
+
+model Compra {
+  id                String       @id @default(cuid())
+  osId              String?
+  os                OS?          @relation(fields: [osId], references: [id])
+  numeroPedido      String?
+  nomeCliente       String?
+  cidadeCliente     String?
+  compradorId       String?
+  comprador         Usuario?     @relation(fields: [compradorId], references: [id])
+  produto           String
+  quantidade        Int
+  unidade           String?
+  fornecedor        String?
+  valor             Float?
+  condicaoPagamento String?
+  prazoEntrega      DateTime?
+  transportadora    String?
+  previsaoChegada   DateTime?
+  status            StatusCompra @default(SOLICITADO)
+  urgencia          String       @default("NORMAL")
+  setorSolicitante  Setor?
+  ciencia           Boolean      @default(false)
+  dataCiencia       DateTime?
+  pedidoRealizado   Boolean      @default(false)
+  dataPedido        DateTime?
+  pdfPedido         String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  notificacoes Notificacao[]
+}
+
+model Estoque {
+  id               String      @id @default(cuid())
+  tipo             TipoEstoque
+  codigo           String      @unique
+  descricao        String
+  unidade          String
+  quantidade       Float       @default(0)
+  quantidadeMinima Float       @default(0)
+  localizacao      String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  movimentacoes MovimentacaoEstoque[]
+}
+
+model MovimentacaoEstoque {
+  id           String   @id @default(cuid())
+  estoqueId    String
+  estoque      Estoque  @relation(fields: [estoqueId], references: [id])
+  tipo         String
+  quantidade   Float
+  motivo       String?
+  numeroPedido String?
+  nomeCliente  String?
+  usuarioId    String?
+  createdAt    DateTime @default(now())
+}
+
+model EpiEntrega {
+  id                     String   @id @default(cuid())
+  funcionarioId          String
+  funcionario            Usuario  @relation("FuncionarioEpi", fields: [funcionarioId], references: [id])
+  entregadoPorId         String?
+  entregadoPor           Usuario? @relation("EntregadorEpi", fields: [entregadoPorId], references: [id])
+  tipoEpi                String
+  quantidade             Int
+  dataEntrega            DateTime
+  confirmacaoRecebimento Boolean  @default(false)
+  setor                  Setor
+  createdAt              DateTime @default(now())
+}
+
+model Manutencao {
+  id                     String           @id @default(cuid())
+  clienteId              String
+  cliente                Cliente          @relation(fields: [clienteId], references: [id])
+  equipamento            String
+  problema               String
+  status                 StatusManutencao @default(ABERTO)
+  prioridade             String           @default("NORMAL")
+  dataEntregaEquipamento DateTime?
+  garantia               Boolean          @default(false)
+  tecnicoId              String?
+  tecnico                Usuario?         @relation(fields: [tecnicoId], references: [id])
+  prazoAtendimento       DateTime?
+  solucao                String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+}
+
+model Expedicao {
+  id              String   @id @default(cuid())
+  numeroPedido    String
+  nomeCliente     String
+  cidadeCliente   String
+  estado          String
+  equipamento     String
+  peso            Float?
+  volume          Float?
+  dimensoes       String?
+  dataPrevisao    DateTime
+  caminhao        String?
+  transportadora  String?
+  status          String   @default("AGUARDANDO")
+  rotaId          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Notificacao {
+  id        String          @id @default(cuid())
+  usuarioId String
+  usuario   Usuario         @relation(fields: [usuarioId], references: [id])
+  titulo    String
+  mensagem  String
+  tipo      TipoNotificacao
+  lida      Boolean         @default(false)
+  pedidoId  String?
+  pedido    Pedido?         @relation(fields: [pedidoId], references: [id])
+  osId      String?
+  os        OS?             @relation(fields: [osId], references: [id])
+  compraId  String?
+  compra    Compra?         @relation(fields: [compraId], references: [id])
+  createdAt DateTime        @default(now())
+}
