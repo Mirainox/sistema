@@ -128,7 +128,7 @@ export async function criar(req: AuthRequest, res: Response) {
   await notificarPorRole(
     ['FINANCEIRO', 'FISCAL', 'EXPEDICAO', 'GERENTE_OPERACIONAL', 'GESTOR_ADMIN'],
     `Novo pedido #${numero}`,
-    `${cliente.nome} - ${cliente.cidade} | Documentos anexados pelo vendedor para conferência`,
+    `${cliente.nome} - ${cliente.cidade} | ${pedido.equipamento} ${pedido.modelo} | Prazo: ${pedido.prazoEntrega.toLocaleDateString('pt-BR')}`,
     'NOVO_PEDIDO',
     { pedidoId: pedido.id }
   )
