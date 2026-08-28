@@ -19,11 +19,6 @@ export const pedidosApi = {
   listar: (params?: any) => api.get('/pedidos', { params }),
   buscar: (id: string) => api.get(`/pedidos/${id}`),
   criar: (data: FormData) => api.post('/pedidos', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
-  interpretarDocumento: (arquivo: File) => {
-    const form = new FormData()
-    form.append('documento', arquivo)
-    return api.post('/pedidos/interpretar-documento', form, { headers: { 'Content-Type': 'multipart/form-data' } })
-  },
   atualizar: (id: string, data: any) => api.put(`/pedidos/${id}`, data),
   atualizarStatus: (id: string, status: string) => api.patch(`/pedidos/${id}/status`, { status }),
   confirmarChecklist: (id: string) => api.patch(`/pedidos/${id}/checklist`),

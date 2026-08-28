@@ -1,11 +1,8 @@
 import { Request, Response } from 'express'
-import fs from 'fs'
-import path from 'path'
 import { Role } from '@prisma/client'
 import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
 import { notificarPorRole, criarNotificacao } from '../services/notificacao.service'
-import { interpretarDocumentoPedido, mimeSuportadoParaLeitura } from '../services/ia.service'
 import { podeVer, podeVerTudo, SETORES_PEDIDO_ADMINISTRATIVO, SETORES_PEDIDO_PRODUCAO } from '../utils/visibilidade'
 
 function gerarNumeroPedido() {
@@ -57,29 +54,6 @@ export async function buscar(req: AuthRequest, res: Response) {
     fotos: fotosVisiveis,
     comprovanteSinal: comprovanteVisivel ? pedido.comprovanteSinal : null,
   })
-}
-
-export async function interpretarDocumento(req: AuthRequest, res: Response) {
-  if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' })
-
-  const extensao = path.extname(req.file.originalname)
-  const mimeType = mimeSuportadoParaLeitura(extensao)
-  const caminhoArquivo = req.file.path
-
-  try {
-    if (!mimeType) {
-      return res.json({ suportado: false, dados: null })
-    }
-    const buffer = fs.readFileSync(caminhoArquivo)
-    const dados = await interpretarDocumentoPedido(buffer, mimeType)
-    return res.json({ suportado: true, dados })
-  } catch (err) {
-    console.error('Erro ao interpretar documento do pedido:', err)
-    return res.status(500).json({ erro: 'Não foi possível ler o documento automaticamente. Preencha os dados manualmente.' })
-  } finally {
-    // Era só pra leitura — o arquivo definitivo é reenviado na criação do pedido.
-    fs.unlink(caminhoArquivo, () => {})
-  }
 }
 
 export async function criar(req: AuthRequest, res: Response) {
@@ -154,7 +128,7 @@ export async function criar(req: AuthRequest, res: Response) {
   await notificarPorRole(
     ['FINANCEIRO', 'FISCAL', 'EXPEDICAO', 'GERENTE_OPERACIONAL', 'GESTOR_ADMIN'],
     `Novo pedido #${numero}`,
-    `${cliente.nome} - ${cliente.cidade} | ${pedido.equipamento} ${pedido.modelo} | Prazo: ${pedido.prazoEntrega.toLocaleDateString('pt-BR')}`,
+    `${cliente.nome} - ${cliente.cidade} | Documentos anexados pelo vendedor para conferência`,
     'NOVO_PEDIDO',
     { pedidoId: pedido.id }
   )
