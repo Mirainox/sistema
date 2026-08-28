@@ -12,36 +12,21 @@ export default function NovoPedido() {
   const [pedidoAssinado, setPedidoAssinado] = useState<File | null>(null)
   const [comprovanteSinal, setComprovanteSinal] = useState<File | null>(null)
 
-  const [form, setForm] = useState({
-    nomeCliente: '', cidadeCliente: '', estadoCliente: '', telefoneCliente: '', emailCliente: '',
-    equipamento: '', modelo: '', opcionais: '', personalizacoes: '',
-    condicaoPagamento: '', prazoEntrega: '', voltagem: '', embalagem: '',
-    valorTotal: '', observacoesTecnicas: '', observacoesComerciais: '',
-  })
-
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
 
-  function set(field: string, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const dadosConfirmados = !!form.nomeCliente && !!form.cidadeCliente && !!form.equipamento &&
-    !!form.modelo && !!form.condicaoPagamento && !!form.prazoEntrega && !!form.valorTotal
-
-  const tudoPronto = !!pedidoGerado && !!pedidoGeradoProducao && !!pedidoAssinado && !!comprovanteSinal && dadosConfirmados
+  const tudoPronto = !!pedidoGerado && !!pedidoGeradoProducao && !!pedidoAssinado && !!comprovanteSinal
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!tudoPronto) {
-      setErro('Anexe o Pedido Gerado, o Pedido Gerado Produção, o Pedido Assinado, preencha os dados e anexe o Comprovante de Sinal.')
+      setErro('Anexe o Pedido Gerado, o Pedido Gerado Produção, o Pedido Assinado e o Comprovante de Sinal.')
       return
     }
     setLoading(true)
     setErro('')
     try {
       const formData = new FormData()
-      Object.entries(form).forEach(([key, value]) => formData.append(key, value))
       formData.append('pedidoGerado', pedidoGerado!)
       formData.append('pedidoGeradoProducao', pedidoGeradoProducao!)
       formData.append('pedidoAssinado', pedidoAssinado!)
@@ -71,49 +56,6 @@ export default function NovoPedido() {
           <AnexoDocumentoInput value={pedidoGerado} onChange={setPedidoGerado} />
         </div>
 
-        {pedidoGerado && (
-          <div className="card space-y-4">
-            <div>
-              <h2 className="font-semibold">📝 Dados do pedido</h2>
-              <p className="text-sm text-gray-500">Preencha os dados conforme o documento anexado antes de enviar.</p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold text-gray-600 mb-2">Dados do Cliente</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="label">Nome do Cliente *</label><input className="input" value={form.nomeCliente} onChange={(e) => set('nomeCliente', e.target.value)} required /></div>
-                <div><label className="label">Cidade *</label><input className="input" value={form.cidadeCliente} onChange={(e) => set('cidadeCliente', e.target.value)} required /></div>
-                <div><label className="label">Estado</label><input className="input" value={form.estadoCliente} onChange={(e) => set('estadoCliente', e.target.value)} /></div>
-                <div><label className="label">Telefone</label><input className="input" value={form.telefoneCliente} onChange={(e) => set('telefoneCliente', e.target.value)} /></div>
-                <div className="col-span-2"><label className="label">Email</label><input className="input" type="email" value={form.emailCliente} onChange={(e) => set('emailCliente', e.target.value)} /></div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold text-gray-600 mb-2">Equipamento</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="label">Equipamento *</label><input className="input" value={form.equipamento} onChange={(e) => set('equipamento', e.target.value)} required /></div>
-                <div><label className="label">Modelo *</label><input className="input" value={form.modelo} onChange={(e) => set('modelo', e.target.value)} required /></div>
-                <div><label className="label">Opcionais</label><input className="input" value={form.opcionais} onChange={(e) => set('opcionais', e.target.value)} /></div>
-                <div><label className="label">Personalizações</label><input className="input" value={form.personalizacoes} onChange={(e) => set('personalizacoes', e.target.value)} /></div>
-                <div><label className="label">Voltagem/Energia</label><input className="input" value={form.voltagem} onChange={(e) => set('voltagem', e.target.value)} /></div>
-                <div><label className="label">Embalagem</label><input className="input" value={form.embalagem} onChange={(e) => set('embalagem', e.target.value)} /></div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold text-gray-600 mb-2">Condições Comerciais</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="label">Condição de Pagamento *</label><input className="input" value={form.condicaoPagamento} onChange={(e) => set('condicaoPagamento', e.target.value)} required /></div>
-                <div><label className="label">Prazo de Entrega *</label><input className="input" type="date" value={form.prazoEntrega} onChange={(e) => set('prazoEntrega', e.target.value)} required /></div>
-                <div className="col-span-2"><label className="label">Valor Total (R$) *</label><input className="input" type="number" step="0.01" value={form.valorTotal} onChange={(e) => set('valorTotal', e.target.value)} required /></div>
-                <div className="col-span-2"><label className="label">Observações Técnicas</label><textarea className="input h-20" value={form.observacoesTecnicas} onChange={(e) => set('observacoesTecnicas', e.target.value)} /></div>
-                <div className="col-span-2"><label className="label">Observações Comerciais</label><textarea className="input h-20" value={form.observacoesComerciais} onChange={(e) => set('observacoesComerciais', e.target.value)} /></div>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="card">
           <label className="flex items-center gap-3 mb-3">
             <input type="checkbox" checked={!!pedidoGeradoProducao} readOnly className="w-4 h-4 accent-blue-600" />
@@ -132,8 +74,8 @@ export default function NovoPedido() {
 
         <div className="card">
           <label className="flex items-center gap-3 mb-3">
-            <span className="text-xl">📎</span>
-            <h2 className="font-semibold">Comprovante de Sinal (Obrigatório)</h2>
+            <input type="checkbox" checked={!!comprovanteSinal} readOnly className="w-4 h-4 accent-blue-600" />
+            <h2 className="font-semibold">Comprovante de Sinal</h2>
           </label>
           <FotoInput value={comprovanteSinal} onChange={setComprovanteSinal} />
         </div>
@@ -141,7 +83,7 @@ export default function NovoPedido() {
         {erro && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{erro}</div>}
 
         {!tudoPronto && (
-          <p className="text-center text-sm text-amber-600">⚠️ Anexe o Pedido Gerado, o Pedido Gerado Produção, o Pedido Assinado, preencha os dados e anexe o Comprovante de Sinal para liberar o envio.</p>
+          <p className="text-center text-sm text-amber-600">⚠️ Anexe os 4 documentos para liberar o envio.</p>
         )}
 
         <div className="flex gap-4">
