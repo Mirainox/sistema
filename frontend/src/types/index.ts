@@ -57,6 +57,7 @@ export interface Pedido {
   checklistComercial: boolean
   pagamentoConfirmado: boolean
   observacoesTecnicas?: string
+  observacoes?: string | null
   comprovanteSinal?: string | null
   createdAt: string
   os?: OS[]

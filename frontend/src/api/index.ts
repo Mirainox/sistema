@@ -20,6 +20,8 @@ export const pedidosApi = {
   buscar: (id: string) => api.get(`/pedidos/${id}`),
   criar: (data: FormData) => api.post('/pedidos', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   atualizar: (id: string, data: any) => api.put(`/pedidos/${id}`, data),
+  atualizarComprovante: (id: string, data: FormData) =>
+    api.patch(`/pedidos/${id}/comprovante`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   atualizarStatus: (id: string, status: string) => api.patch(`/pedidos/${id}/status`, { status }),
   confirmarChecklist: (id: string) => api.patch(`/pedidos/${id}/checklist`),
   confirmarPagamento: (id: string) => api.patch(`/pedidos/${id}/pagamento`),

@@ -181,6 +181,7 @@ model Pedido {
   status               StatusPedido @default(AGUARDANDO_FINANCEIRO)
   observacoesTecnicas  String?
   observacoesComerciais String?
+  observacoes          String?
   contratoAssinado     Boolean      @default(false)
   comprovanteSinal     String?
   checklistComercial   Boolean      @default(false)

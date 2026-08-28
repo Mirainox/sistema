@@ -4,6 +4,7 @@ import { pedidosApi, osApi } from '../../api'
 import { Pedido } from '../../types'
 import { formatarData, formatarMoeda, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL, STATUS_OS_COR, STATUS_OS_LABEL } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
+import AnexoDocumentoInput from '../../components/AnexoDocumentoInput'
 
 export default function DetalhePedido() {
   const { id } = useParams()
@@ -11,6 +12,29 @@ export default function DetalhePedido() {
   const { hasRole } = useAuth()
   const [pedido, setPedido] = useState<Pedido | null>(null)
   const [loading, setLoading] = useState(true)
+  const [comprovanteFile, setComprovanteFile] = useState<File | null>(null)
+  const [salvandoComprovante, setSalvandoComprovante] = useState(false)
+  const [erroComprovante, setErroComprovante] = useState('')
+
+  const podeMexerComprovante = hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL', 'FINANCEIRO')
+
+  async function salvarComprovante() {
+    if (!comprovanteFile) return
+    setSalvandoComprovante(true)
+    setErroComprovante('')
+    try {
+      const fd = new FormData()
+      fd.append('comprovanteSinal', comprovanteFile)
+      await pedidosApi.atualizarComprovante(id!, fd)
+      setComprovanteFile(null)
+      const { data } = await pedidosApi.buscar(id!)
+      setPedido(data)
+    } catch (err: any) {
+      setErroComprovante(err.response?.data?.erro || 'Erro ao salvar o comprovante')
+    } finally {
+      setSalvandoComprovante(false)
+    }
+  }
 
   useEffect(() => {
     pedidosApi.buscar(id!).then(({ data }) => { setPedido(data); setLoading(false) })
@@ -75,6 +99,13 @@ export default function DetalhePedido() {
             <p className="text-sm text-gray-700">{pedido.observacoesTecnicas}</p>
           </div>
         )}
+
+        {pedido.observacoes && (
+          <div className="card md:col-span-2">
+            <h2 className="font-semibold mb-2">Observações do Vendedor</h2>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{pedido.observacoes}</p>
+          </div>
+        )}
       </div>
 
       <div className="card">
@@ -86,10 +117,18 @@ export default function DetalhePedido() {
           <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.pagamentoConfirmado ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
             {pedido.pagamentoConfirmado ? '✅' : '⬜'} Pagamento Confirmado
           </div>
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.comprovanteSinal ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+            {pedido.comprovanteSinal ? '✅' : '⬜'} Comprovante de Sinal
+          </div>
           <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.os && pedido.os.length > 0 ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
             {pedido.os && pedido.os.length > 0 ? '✅' : '⬜'} O.S. Gerada
           </div>
         </div>
+        {!pedido.comprovanteSinal && (
+          <p className="text-xs text-amber-600 mt-3">
+            O comprovante de sinal ainda não foi anexado. O pedido segue normalmente; anexe o comprovante quando estiver disponível para concluir o processo.
+          </p>
+        )}
       </div>
 
       {hasRole('FINANCEIRO', 'ADMIN', 'GERENTE_OPERACIONAL') && !pedido.pagamentoConfirmado && pedido.status === 'AGUARDANDO_FINANCEIRO' && (
@@ -125,6 +164,28 @@ export default function DetalhePedido() {
               </a>
             )}
           </div>
+        </div>
+      )}
+
+      {podeMexerComprovante && (
+        <div className={`card ${pedido.comprovanteSinal ? '' : 'bg-amber-50 border-amber-200'}`}>
+          <h2 className="font-semibold mb-2">
+            {pedido.comprovanteSinal ? '🔄 Substituir Comprovante de Sinal' : '📤 Anexar Comprovante de Sinal'}
+          </h2>
+          <p className="text-sm text-gray-600 mb-3">
+            {pedido.comprovanteSinal
+              ? 'Já existe um comprovante anexado. Envie um novo arquivo para substituí-lo — pode ser feito a qualquer momento.'
+              : 'O comprovante pode ser anexado agora ou depois (dias ou semanas depois), sem limite de tempo.'}
+          </p>
+          <AnexoDocumentoInput value={comprovanteFile} onChange={setComprovanteFile} />
+          {erroComprovante && <p className="text-sm text-red-600 mt-2">{erroComprovante}</p>}
+          <button
+            onClick={salvarComprovante}
+            disabled={!comprovanteFile || salvandoComprovante}
+            className="btn-primary mt-3"
+          >
+            {salvandoComprovante ? 'Salvando...' : pedido.comprovanteSinal ? 'Substituir comprovante' : 'Salvar comprovante'}
+          </button>
         </div>
       )}
 

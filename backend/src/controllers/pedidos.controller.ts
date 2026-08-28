@@ -47,7 +47,8 @@ export async function buscar(req: AuthRequest, res: Response) {
 
   const role = req.usuario!.role
   const fotosVisiveis = pedido.fotos.filter((f) => podeVer(role, f.visivelPara))
-  const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role)
+  const ehVendedorDoPedido = pedido.vendedorId === req.usuario!.id
+  const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role) || ehVendedorDoPedido
 
   return res.json({
     ...pedido,
@@ -98,6 +99,7 @@ export async function criar(req: AuthRequest, res: Response) {
       valorTotal: data.valorTotal ? Number(data.valorTotal) : 0,
       observacoesTecnicas: data.observacoesTecnicas,
       observacoesComerciais: data.observacoesComerciais,
+      observacoes: data.observacoes || undefined,
       comprovanteSinal: comprovante ? `/uploads/${comprovante.filename}` : undefined,
     },
     include: { cliente: true },
@@ -164,6 +166,41 @@ export async function confirmarPagamento(req: AuthRequest, res: Response) {
       tipo: 'NOVO_PEDIDO',
       pedidoId: pedido.id,
     })
+  }
+
+  return res.json(pedido)
+}
+
+// Comprovante de Sinal pode ser anexado ou substituído a qualquer momento,
+// sem limite de tempo desde a criação do pedido.
+export async function atualizarComprovante(req: AuthRequest, res: Response) {
+  const { id } = req.params
+  const arquivo = req.file as Express.Multer.File | undefined
+  const observacoes = req.body?.observacoes
+
+  if (!arquivo && observacoes === undefined) {
+    return res.status(400).json({ erro: 'Envie o comprovante de sinal ou as observações.' })
+  }
+
+  const pedidoExistente = await prisma.pedido.findUnique({ where: { id } })
+  if (!pedidoExistente) return res.status(404).json({ erro: 'Pedido não encontrado' })
+
+  const pedido = await prisma.pedido.update({
+    where: { id },
+    data: {
+      ...(arquivo ? { comprovanteSinal: `/uploads/${arquivo.filename}` } : {}),
+      ...(observacoes !== undefined ? { observacoes: observacoes || null } : {}),
+    },
+  })
+
+  if (arquivo) {
+    await notificarPorRole(
+      ['FINANCEIRO', 'FISCAL', 'EXPEDICAO', 'GERENTE_OPERACIONAL', 'GESTOR_ADMIN'],
+      `Comprovante de sinal anexado - Pedido #${pedido.numero}`,
+      `${req.usuario!.nome || 'Vendedor'} anexou o comprovante de sinal do pedido #${pedido.numero}.`,
+      'NOVO_PEDIDO',
+      { pedidoId: pedido.id }
+    )
   }
 
   return res.json(pedido)

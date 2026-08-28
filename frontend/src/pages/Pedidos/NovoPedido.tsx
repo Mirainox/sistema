@@ -10,16 +10,19 @@ export default function NovoPedido() {
   const [pedidoGeradoProducao, setPedidoGeradoProducao] = useState<File | null>(null)
   const [pedidoAssinado, setPedidoAssinado] = useState<File | null>(null)
   const [comprovanteSinal, setComprovanteSinal] = useState<File | null>(null)
+  const [observacoes, setObservacoes] = useState('')
 
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
 
-  const tudoPronto = !!pedidoGerado && !!pedidoGeradoProducao && !!pedidoAssinado && !!comprovanteSinal
+  // Comprovante de Sinal NÃO é obrigatório para lançar o pedido — pode ser
+  // anexado depois, sem limite de tempo (na tela de detalhe do pedido).
+  const tudoPronto = !!pedidoGerado && !!pedidoGeradoProducao && !!pedidoAssinado
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!tudoPronto) {
-      setErro('Anexe o Pedido Gerado, o Pedido Gerado Produção, o Pedido Assinado e o Comprovante de Sinal.')
+      setErro('Anexe o Pedido Gerado, o Pedido Gerado Produção e o Pedido Assinado.')
       return
     }
     setLoading(true)
@@ -29,7 +32,8 @@ export default function NovoPedido() {
       formData.append('pedidoGerado', pedidoGerado!)
       formData.append('pedidoGeradoProducao', pedidoGeradoProducao!)
       formData.append('pedidoAssinado', pedidoAssinado!)
-      formData.append('comprovanteSinal', comprovanteSinal!)
+      if (comprovanteSinal) formData.append('comprovanteSinal', comprovanteSinal)
+      if (observacoes.trim()) formData.append('observacoes', observacoes.trim())
       const { data } = await pedidosApi.criar(formData)
       navigate(`/pedidos/${data.id}`)
     } catch (err: any) {
@@ -72,17 +76,32 @@ export default function NovoPedido() {
         </div>
 
         <div className="card">
-          <label className="flex items-center gap-3 mb-3">
+          <label className="flex items-center gap-3 mb-1">
             <input type="checkbox" checked={!!comprovanteSinal} readOnly className="w-4 h-4 accent-blue-600" />
-            <h2 className="font-semibold">Comprovante de Sinal</h2>
+            <h2 className="font-semibold">Comprovante de Sinal <span className="text-sm font-normal text-gray-500">(opcional)</span></h2>
           </label>
+          <p className="text-xs text-gray-500 mb-3">
+            Não é obrigatório agora. Você pode anexar ou substituir o comprovante depois,
+            a qualquer momento, na tela do pedido.
+          </p>
           <AnexoDocumentoInput value={comprovanteSinal} onChange={setComprovanteSinal} />
+        </div>
+
+        <div className="card">
+          <h2 className="font-semibold mb-2">Observações <span className="text-sm font-normal text-gray-500">(opcional)</span></h2>
+          <textarea
+            value={observacoes}
+            onChange={(e) => setObservacoes(e.target.value)}
+            rows={4}
+            placeholder="Anotações do vendedor sobre este pedido..."
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
         {erro && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{erro}</div>}
 
         {!tudoPronto && (
-          <p className="text-center text-sm text-amber-600">⚠️ Anexe os 4 documentos para liberar o envio.</p>
+          <p className="text-center text-sm text-amber-600">⚠️ Anexe os 3 documentos (Pedido Gerado, Pedido Gerado Produção e Pedido Assinado) para liberar o envio.</p>
         )}
 
         <div className="flex gap-4">
