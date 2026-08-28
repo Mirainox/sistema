@@ -56,9 +56,8 @@ export async function movimentar(req: AuthRequest, res: Response) {
 }
 
 export async function abaixoMinimo(req: Request, res: Response) {
-  const itens = await prisma.estoque.findMany({
-    where: { quantidade: { lt: prisma.estoque.fields.quantidadeMinima } },
-  })
+  const todos = await prisma.estoque.findMany()
+  const itens = todos.filter((i) => i.quantidade < i.quantidadeMinima)
   return res.json(itens)
 }
 

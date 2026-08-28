@@ -4,6 +4,7 @@ import { osApi, fotosApi, checklistsApi } from '../../api'
 import { OS } from '../../types'
 import { formatarData, STATUS_OS_COR, STATUS_OS_LABEL } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
+import FotoInput from '../../components/FotoInput'
 
 const SETORES_PRODUCAO = [
   { setor: 'PRODUCAO_INOX', label: 'Produção Inox', responsavel: 'Israel' },
@@ -124,7 +125,7 @@ export default function PainelProducao() {
             </p>
             <div>
               <label className="label">Foto *</label>
-              <input type="file" accept="image/*" onChange={(e) => setFotoFile(e.target.files?.[0] || null)} className="input" />
+              <FotoInput value={fotoFile} onChange={setFotoFile} />
             </div>
             <div>
               <label className="label">Descrição</label>

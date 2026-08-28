@@ -3,6 +3,7 @@ import { checklistsApi, fotosApi } from '../../api'
 import { useAuth } from '../../contexts/AuthContext'
 import { SETOR_LABEL } from '../../utils/formatters'
 import { Setor } from '../../types'
+import FotoInput from '../../components/FotoInput'
 
 const ITENS_ORGANIZACAO = [
   'Lâmpadas apagadas', 'Ferramentas levantadas', 'Ferramentas guardadas',
@@ -112,8 +113,7 @@ export default function ChecklistSexta() {
 
       <div className="card">
         <h2 className="font-semibold mb-3">📸 Foto da Área (Obrigatório)</h2>
-        <input type="file" accept="image/*" onChange={(e) => setFotoFile(e.target.files?.[0] || null)} className="input" />
-        {fotoFile && <p className="text-sm text-green-600 mt-2">✓ {fotoFile.name}</p>}
+        <FotoInput value={fotoFile} onChange={setFotoFile} />
       </div>
 
       <button className="btn-primary w-full" onClick={enviar} disabled={enviando || !todosMarcados || !fotoFile}>

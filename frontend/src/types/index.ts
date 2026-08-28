@@ -30,6 +30,8 @@ export interface Usuario {
   setor: Setor
   role: Role
   ativo: boolean
+  senhaTemporaria?: boolean
+  senhaAlteradaEm?: string | null
 }
 
 export interface Cliente {
@@ -55,8 +57,10 @@ export interface Pedido {
   checklistComercial: boolean
   pagamentoConfirmado: boolean
   observacoesTecnicas?: string
+  comprovanteSinal?: string | null
   createdAt: string
   os?: OS[]
+  fotos?: { id: string; url: string; descricao?: string; usuario?: { nome: string }; createdAt: string }[]
 }
 
 export interface OS {

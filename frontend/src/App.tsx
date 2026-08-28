@@ -20,11 +20,13 @@ import ListaChecklists from './pages/Checklists/ListaChecklists'
 import PainelFinanceiro from './pages/Financeiro/PainelFinanceiro'
 import PainelFiscal from './pages/Fiscal/PainelFiscal'
 import GerenciarUsuarios from './pages/Usuarios/GerenciarUsuarios'
+import TrocarSenhaObrigatoria from './pages/TrocarSenhaObrigatoria'
 
 function RotaProtegida({ children }: { children: React.ReactNode }) {
   const { usuario, loading } = useAuth()
   if (loading) return <div className="flex items-center justify-center h-screen text-gray-500">Carregando...</div>
   if (!usuario) return <Navigate to="/login" replace />
+  if (usuario.senhaTemporaria) return <Navigate to="/trocar-senha-obrigatoria" replace />
   return <>{children}</>
 }
 
@@ -33,6 +35,14 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={usuario ? <Navigate to="/" replace /> : <Login />} />
+      <Route
+        path="/trocar-senha-obrigatoria"
+        element={
+          !usuario ? <Navigate to="/login" replace /> :
+          !usuario.senhaTemporaria ? <Navigate to="/" replace /> :
+          <TrocarSenhaObrigatoria />
+        }
+      />
       <Route path="/" element={<RotaProtegida><Layout /></RotaProtegida>}>
         <Route index element={<Dashboard />} />
         <Route path="pedidos" element={<ListaPedidos />} />

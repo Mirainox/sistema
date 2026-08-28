@@ -17,7 +17,7 @@ async function seed() {
     { nome: 'Camila', email: 'camila@mirainox.com.br', cargo: 'Financeiro', setor: 'FINANCEIRO' as const, role: 'FINANCEIRO' as const },
     { nome: 'Carol', email: 'carol@mirainox.com.br', cargo: 'Compras', setor: 'COMPRAS' as const, role: 'COMPRADOR' as const },
     { nome: 'Davi', email: 'davi@mirainox.com.br', cargo: 'Compras', setor: 'COMPRAS' as const, role: 'COMPRADOR' as const },
-    { nome: 'Elismar Parnier', email: 'elismar@mirainox.com.br', cargo: 'Vendedor', setor: 'VENDAS' as const, role: 'VENDEDOR' as const },
+    { nome: 'Helismar Parnier', email: 'helismar@mirainox.com.br', cargo: 'Vendedor', setor: 'VENDAS' as const, role: 'VENDEDOR' as const },
     { nome: 'Sulamita', email: 'sulamita@mirainox.com.br', cargo: 'Vendedora', setor: 'VENDAS' as const, role: 'VENDEDOR' as const },
     { nome: 'Ana Luísa Alcântara', email: 'analuisa@mirainox.com.br', cargo: 'Vendedora', setor: 'VENDAS' as const, role: 'VENDEDOR' as const },
     { nome: 'Gilberto Adriano', email: 'gilberto@mirainox.com.br', cargo: 'Vendedor', setor: 'VENDAS' as const, role: 'VENDEDOR' as const },

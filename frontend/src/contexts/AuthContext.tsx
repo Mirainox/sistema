@@ -8,6 +8,7 @@ interface AuthContextData {
   login: (email: string, senha: string) => Promise<void>
   logout: () => void
   hasRole: (...roles: string[]) => boolean
+  refreshUsuario: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData)
@@ -42,8 +43,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return !!usuario && roles.includes(usuario.role)
   }
 
+  async function refreshUsuario() {
+    const { data } = await authApi.perfil()
+    setUsuario((prev) => {
+      const atualizado = { ...prev, ...data }
+      localStorage.setItem('mirainox_usuario', JSON.stringify(atualizado))
+      return atualizado
+    })
+  }
+
   return (
-    <AuthContext.Provider value={{ usuario, loading, login, logout, hasRole }}>
+    <AuthContext.Provider value={{ usuario, loading, login, logout, hasRole, refreshUsuario }}>
       {children}
     </AuthContext.Provider>
   )

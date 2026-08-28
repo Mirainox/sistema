@@ -92,7 +92,7 @@ export default function DetalhePedido() {
         </div>
       </div>
 
-      {hasRole('FINANCEIRO', 'ADMIN', 'GESTOR_ADMIN') && !pedido.pagamentoConfirmado && pedido.status === 'AGUARDANDO_FINANCEIRO' && (
+      {hasRole('FINANCEIRO', 'ADMIN', 'GERENTE_OPERACIONAL') && !pedido.pagamentoConfirmado && pedido.status === 'AGUARDANDO_FINANCEIRO' && (
         <div className="card bg-yellow-50 border-yellow-200">
           <h2 className="font-semibold text-yellow-800 mb-2">💰 Confirmação de Pagamento</h2>
           <p className="text-sm text-yellow-700 mb-4">Confirme que o pagamento/sinal entrou na conta antes de liberar o pedido para produção.</p>
@@ -100,11 +100,31 @@ export default function DetalhePedido() {
         </div>
       )}
 
-      {hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'GESTOR_PRODUCAO') && pedido.pagamentoConfirmado && (!pedido.os || pedido.os.length === 0) && (
+      {hasRole('GERENTE_OPERACIONAL', 'ADMIN') && pedido.pagamentoConfirmado && (!pedido.os || pedido.os.length === 0) && (
         <div className="card bg-blue-50 border-blue-200">
           <h2 className="font-semibold text-blue-800 mb-2">🔧 Gerar Ordem de Serviço</h2>
           <p className="text-sm text-blue-700 mb-4">Pagamento confirmado. Gere a O.S. para iniciar a distribuição à produção.</p>
           <button onClick={gerarOS} className="btn-primary">🔧 Gerar O.S.</button>
+        </div>
+      )}
+
+      {((pedido.fotos && pedido.fotos.length > 0) || pedido.comprovanteSinal) && (
+        <div className="card">
+          <h2 className="font-semibold mb-3">📎 Documentos do Pedido</h2>
+          <div className="space-y-2">
+            {pedido.fotos?.map((foto) => (
+              <a key={foto.id} href={foto.url} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                <span className="font-medium text-sm">{foto.descricao || 'Documento'}</span>
+                <span className="text-xs text-blue-600">Abrir →</span>
+              </a>
+            ))}
+            {pedido.comprovanteSinal && (
+              <a href={pedido.comprovanteSinal} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                <span className="font-medium text-sm">Comprovante de Sinal</span>
+                <span className="text-xs text-blue-600">Abrir →</span>
+              </a>
+            )}
+          </div>
         </div>
       )}
 

@@ -6,7 +6,7 @@ import routes from './routes'
 import { iniciarCronJobs } from './services/cron.service'
 
 const app = express()
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 80
 
 app.use(cors())
 app.use(express.json())
@@ -16,6 +16,10 @@ app.use('/uploads', express.static(path.join(__dirname, '..', process.env.UPLOAD
 app.use('/api', routes)
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }))
+
+const frontendDist = path.join(__dirname, '..', '..', 'frontend', 'dist')
+app.use(express.static(frontendDist))
+app.get('*', (_req, res) => res.sendFile(path.join(frontendDist, 'index.html')))
 
 app.listen(PORT, () => {
   console.log(`✅ Servidor Mirainox rodando na porta ${PORT}`)

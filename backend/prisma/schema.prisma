@@ -131,6 +131,8 @@ model Usuario {
   setor     Setor
   role      Role     @default(PRODUCAO)
   ativo     Boolean  @default(true)
+  senhaTemporaria Boolean   @default(true)
+  senhaAlteradaEm DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -188,6 +190,7 @@ model Pedido {
 
   os           OS[]
   notificacoes Notificacao[]
+  fotos        Foto[]
 }
 
 model OS {
@@ -270,6 +273,8 @@ model Foto {
   os            OS?       @relation(fields: [osId], references: [id])
   checklistId   String?
   checklist     Checklist? @relation(fields: [checklistId], references: [id])
+  pedidoId      String?
+  pedido        Pedido?   @relation(fields: [pedidoId], references: [id])
   usuarioId     String
   usuario       Usuario   @relation(fields: [usuarioId], references: [id])
   setor         Setor
@@ -278,6 +283,7 @@ model Foto {
   numeroPedido  String?
   nomeCliente   String?
   cidadeCliente String?
+  visivelPara   Role[]
   createdAt     DateTime  @default(now())
 }
 

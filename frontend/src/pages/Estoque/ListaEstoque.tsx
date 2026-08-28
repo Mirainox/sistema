@@ -48,8 +48,8 @@ export default function ListaEstoque() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Estoque</h1>
-        {hasRole('ADMIN', 'ALMOXARIFE', 'GESTOR_ADMIN') && (
+        <h1 className="text-2xl font-bold text-gray-900">Almoxarifado</h1>
+        {hasRole('ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL') && (
           <button className="btn-primary" onClick={() => setModalCriar(true)}>+ Novo Item</button>
         )}
       </div>

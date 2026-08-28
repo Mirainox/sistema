@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react'
 import { usuariosApi } from '../../api'
-import { SETOR_LABEL, ROLE_LABEL } from '../../utils/formatters'
+import { SETOR_LABEL, ROLE_LABEL, formatarDataHora } from '../../utils/formatters'
 import { Setor, Role } from '../../types'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function GerenciarUsuarios() {
+  const { hasRole } = useAuth()
+  const souAdmin = hasRole('ADMIN')
   const [usuarios, setUsuarios] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ nome: '', email: '', senha: 'mirainox123', cargo: '', setor: '' as Setor | '', role: '' as Role | '' })
+  const [senhaGerada, setSenhaGerada] = useState<{ nome: string; senha: string } | null>(null)
 
   useEffect(() => { carregar() }, [])
 
@@ -30,6 +34,13 @@ export default function GerenciarUsuarios() {
     await carregar()
   }
 
+  async function resetarSenha(id: string, nome: string) {
+    if (!confirm(`Resetar a senha de ${nome}? Ela vai precisar trocar por uma nova no próximo login.`)) return
+    const { data } = await usuariosApi.resetarSenha(id)
+    setSenhaGerada({ nome, senha: data.senhaTemporaria })
+    await carregar()
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -48,6 +59,7 @@ export default function GerenciarUsuarios() {
                 <th className="pb-3 font-semibold text-gray-700">Setor</th>
                 <th className="pb-3 font-semibold text-gray-700">Perfil</th>
                 <th className="pb-3 font-semibold text-gray-700">Status</th>
+                {souAdmin && <th className="pb-3 font-semibold text-gray-700">Senha</th>}
                 <th className="pb-3 font-semibold text-gray-700">Ações</th>
               </tr>
             </thead>
@@ -64,9 +76,23 @@ export default function GerenciarUsuarios() {
                       {u.ativo ? 'Ativo' : 'Inativo'}
                     </span>
                   </td>
-                  <td className="py-3">
+                  {souAdmin && (
+                    <td className="py-3">
+                      {u.senhaTemporaria ? (
+                        <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">⚠️ Senha padrão</span>
+                      ) : (
+                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700" title={u.senhaAlteradaEm ? formatarDataHora(u.senhaAlteradaEm) : ''}>
+                          ✅ Alterada
+                        </span>
+                      )}
+                    </td>
+                  )}
+                  <td className="py-3 space-x-3">
                     {u.ativo && (
                       <button className="text-red-500 hover:underline text-xs" onClick={() => desativar(u.id, u.nome)}>Desativar</button>
+                    )}
+                    {souAdmin && (
+                      <button className="text-blue-500 hover:underline text-xs" onClick={() => resetarSenha(u.id, u.nome)}>Resetar senha</button>
                     )}
                   </td>
                 </tr>
@@ -102,6 +128,22 @@ export default function GerenciarUsuarios() {
               <button className="btn-primary" onClick={criar} disabled={!form.nome || !form.email || !form.setor || !form.role}>Criar Usuário</button>
               <button className="btn-secondary" onClick={() => setModal(false)}>Cancelar</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {senhaGerada && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-96 space-y-4">
+            <h2 className="font-semibold text-lg">🔑 Senha resetada</h2>
+            <p className="text-sm text-gray-600">
+              Repasse essa senha temporária para <strong>{senhaGerada.nome}</strong>. Ela só aparece aqui uma vez —
+              no próximo login, a pessoa vai ser obrigada a trocá-la por uma nova.
+            </p>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center font-mono text-lg tracking-wider">
+              {senhaGerada.senha}
+            </div>
+            <button className="btn-primary w-full" onClick={() => setSenhaGerada(null)}>Entendi</button>
           </div>
         </div>
       )}

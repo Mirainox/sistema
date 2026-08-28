@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import SenhaInput from '../components/SenhaInput'
 
 export default function Login() {
   const { login } = useAuth()
@@ -28,9 +29,11 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-            M
-          </div>
+          <img
+            src="/logo-mirainox.jpg"
+            alt="Mirainox"
+            className="w-28 h-28 mx-auto mb-4 rounded-2xl object-cover shadow-lg"
+          />
           <h1 className="text-2xl font-bold text-gray-900">Mirainox</h1>
           <p className="text-gray-500 mt-1">Sistema de Gestão</p>
         </div>
@@ -49,11 +52,9 @@ export default function Login() {
           </div>
           <div>
             <label className="label">Senha</label>
-            <input
-              type="password"
-              className="input"
+            <SenhaInput
               value={senha}
-              onChange={(e) => setSenha(e.target.value)}
+              onChange={setSenha}
               placeholder="••••••••"
               required
             />

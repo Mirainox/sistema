@@ -48,7 +48,8 @@ export default function DetalheOS() {
   if (loading) return <div className="text-center py-8 text-gray-500">Carregando...</div>
   if (!os) return <div className="text-center py-8 text-red-500">O.S. não encontrada</div>
 
-  const podeDist = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'GESTOR_PRODUCAO')
+  const podeDistribuir = hasRole('GERENTE_OPERACIONAL', 'ADMIN')
+  const podeAtualizarStatus = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'PRODUCAO', 'ALMOXARIFE')
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -99,7 +100,7 @@ export default function DetalheOS() {
         </div>
       </div>
 
-      {podeDist && os.status === 'GERADA' && (
+      {podeDistribuir && os.status === 'GERADA' && (
         <div className="card">
           <h2 className="font-semibold mb-4">📋 Distribuir O.S. para Setores</h2>
           {!distribuindo ? (
@@ -149,7 +150,7 @@ export default function DetalheOS() {
         </div>
       )}
 
-      {podeDist && os.status !== 'GERADA' && os.status !== 'CONCLUIDA' && os.status !== 'EXPEDIDA' && (
+      {podeAtualizarStatus && os.status !== 'GERADA' && os.status !== 'CONCLUIDA' && os.status !== 'EXPEDIDA' && (
         <div className="card">
           <h2 className="font-semibold mb-3">Atualizar Status da O.S.</h2>
           <div className="flex flex-wrap gap-2">
