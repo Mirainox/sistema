@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { pedidosApi } from '../../api'
-import FotoInput from '../../components/FotoInput'
 import AnexoDocumentoInput from '../../components/AnexoDocumentoInput'
 
 export default function NovoPedido() {
@@ -77,7 +76,7 @@ export default function NovoPedido() {
             <input type="checkbox" checked={!!comprovanteSinal} readOnly className="w-4 h-4 accent-blue-600" />
             <h2 className="font-semibold">Comprovante de Sinal</h2>
           </label>
-          <FotoInput value={comprovanteSinal} onChange={setComprovanteSinal} />
+          <AnexoDocumentoInput value={comprovanteSinal} onChange={setComprovanteSinal} />
         </div>
 
         {erro && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{erro}</div>}
