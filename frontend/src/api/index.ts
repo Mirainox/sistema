@@ -3,6 +3,8 @@ import api from './axios'
 export const authApi = {
   login: (email: string, senha: string) => api.post('/auth/login', { email, senha }),
   perfil: () => api.get('/auth/perfil'),
+  atualizarPerfil: (data: FormData) =>
+    api.put('/auth/perfil', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   alterarSenha: (senhaAtual: string, novaSenha: string) => api.put('/auth/senha', { senhaAtual, novaSenha }),
 }
 

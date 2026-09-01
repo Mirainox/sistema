@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { notificacoesApi } from '../../api'
 import { Notificacao } from '../../types'
@@ -6,8 +7,10 @@ import { formatarDataHora } from '../../utils/formatters'
 
 export default function Header() {
   const { logout, usuario } = useAuth()
+  const navigate = useNavigate()
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([])
   const [aberto, setAberto] = useState(false)
+  const [perfilAberto, setPerfilAberto] = useState(false)
   const naoLidas = notificacoes.filter((n) => !n.lida).length
 
   useEffect(() => {
@@ -85,13 +88,42 @@ export default function Header() {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            {usuario?.nome.charAt(0)}
-          </div>
-          <button onClick={logout} className="text-sm text-gray-600 hover:text-red-600">
-            Sair
+        <div className="relative">
+          <button
+            onClick={() => setPerfilAberto((v) => !v)}
+            className="flex items-center gap-2 p-1 pr-2 rounded-lg hover:bg-gray-100"
+          >
+            <div className="w-8 h-8 bg-blue-600 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold">
+              {usuario?.fotoPerfil
+                ? <img src={usuario.fotoPerfil} alt="Perfil" className="w-full h-full object-cover" />
+                : usuario?.nome.charAt(0)}
+            </div>
+            <span className="text-sm text-gray-700 hidden sm:block">{usuario?.nome}</span>
           </button>
+
+          {perfilAberto && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setPerfilAberto(false)} />
+              <div className="absolute right-0 top-12 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b">
+                  <p className="text-sm font-medium truncate">{usuario?.nome}</p>
+                  <p className="text-xs text-gray-500 truncate">{usuario?.email}</p>
+                </div>
+                <button
+                  onClick={() => { setPerfilAberto(false); navigate('/perfil') }}
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50"
+                >
+                  👤 Meu perfil
+                </button>
+                <button
+                  onClick={logout}
+                  className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                >
+                  ⎋ Sair
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>

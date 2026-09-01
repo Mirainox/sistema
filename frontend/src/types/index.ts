@@ -26,6 +26,8 @@ export interface Usuario {
   id: string
   nome: string
   email: string
+  telefone?: string | null
+  fotoPerfil?: string | null
   cargo: string
   setor: Setor
   role: Role

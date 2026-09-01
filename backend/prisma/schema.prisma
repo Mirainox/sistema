@@ -131,6 +131,8 @@ model Usuario {
   setor     Setor
   role      Role     @default(PRODUCAO)
   ativo     Boolean  @default(true)
+  telefone  String?
+  fotoPerfil String?
   senhaTemporaria Boolean   @default(true)
   senhaAlteradaEm DateTime?
   createdAt DateTime @default(now())
