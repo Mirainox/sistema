@@ -10,6 +10,8 @@ export default function NovoPedido() {
   const [pedidoGeradoProducao, setPedidoGeradoProducao] = useState<File | null>(null)
   const [pedidoAssinado, setPedidoAssinado] = useState<File | null>(null)
   const [comprovanteSinal, setComprovanteSinal] = useState<File | null>(null)
+  const [amostraEmbalagem, setAmostraEmbalagem] = useState(false)
+  const [amostraEmbalagemObs, setAmostraEmbalagemObs] = useState('')
   const [observacoes, setObservacoes] = useState('')
 
   const [loading, setLoading] = useState(false)
@@ -33,6 +35,8 @@ export default function NovoPedido() {
       formData.append('pedidoGeradoProducao', pedidoGeradoProducao!)
       formData.append('pedidoAssinado', pedidoAssinado!)
       if (comprovanteSinal) formData.append('comprovanteSinal', comprovanteSinal)
+      formData.append('amostraEmbalagem', String(amostraEmbalagem))
+      if (amostraEmbalagemObs.trim()) formData.append('amostraEmbalagemObs', amostraEmbalagemObs.trim())
       if (observacoes.trim()) formData.append('observacoes', observacoes.trim())
       const { data } = await pedidosApi.criar(formData)
       navigate(`/pedidos/${data.id}`)
@@ -85,6 +89,26 @@ export default function NovoPedido() {
             a qualquer momento, na tela do pedido.
           </p>
           <AnexoDocumentoInput value={comprovanteSinal} onChange={setComprovanteSinal} />
+        </div>
+
+        <div className="card">
+          <label className="flex items-center gap-3 mb-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={amostraEmbalagem}
+              onChange={(e) => setAmostraEmbalagem(e.target.checked)}
+              className="w-4 h-4 accent-blue-600"
+            />
+            <h2 className="font-semibold">Amostra Embalagem <span className="text-sm font-normal text-gray-500">(opcional)</span></h2>
+          </label>
+          <p className="text-xs text-gray-500 mb-3">Marque o quadrado se houver amostra de embalagem. Não precisa anexar nada.</p>
+          <textarea
+            value={amostraEmbalagemObs}
+            onChange={(e) => setAmostraEmbalagemObs(e.target.value)}
+            rows={3}
+            placeholder="Observação sobre a amostra de embalagem..."
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
         <div className="card">

@@ -49,11 +49,15 @@ export async function buscar(req: AuthRequest, res: Response) {
   const fotosVisiveis = pedido.fotos.filter((f) => podeVer(role, f.visivelPara))
   const ehVendedorDoPedido = pedido.vendedorId === req.usuario!.id
   const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role) || ehVendedorDoPedido
+  // Amostra Embalagem NAO deve ser vista pelo Financeiro nem pelo Fiscal.
+  const amostraVisivel = role !== 'FINANCEIRO' && role !== 'FISCAL'
 
   return res.json({
     ...pedido,
     fotos: fotosVisiveis,
     comprovanteSinal: comprovanteVisivel ? pedido.comprovanteSinal : null,
+    amostraEmbalagem: amostraVisivel ? pedido.amostraEmbalagem : null,
+    amostraEmbalagemObs: amostraVisivel ? pedido.amostraEmbalagemObs : null,
   })
 }
 
@@ -100,6 +104,8 @@ export async function criar(req: AuthRequest, res: Response) {
       observacoesTecnicas: data.observacoesTecnicas,
       observacoesComerciais: data.observacoesComerciais,
       observacoes: data.observacoes || undefined,
+      amostraEmbalagem: data.amostraEmbalagem === 'true' || data.amostraEmbalagem === true,
+      amostraEmbalagemObs: data.amostraEmbalagemObs || undefined,
       comprovanteSinal: comprovante ? `/uploads/${comprovante.filename}` : undefined,
     },
     include: { cliente: true },
@@ -134,6 +140,17 @@ export async function criar(req: AuthRequest, res: Response) {
     'NOVO_PEDIDO',
     { pedidoId: pedido.id }
   )
+
+  // Amostra Embalagem vai para o Wellington e a liderança de produção — nunca para Financeiro/Fiscal.
+  if (pedido.amostraEmbalagem) {
+    await notificarPorRole(
+      ['GERENTE_OPERACIONAL', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'PRODUCAO'],
+      `Amostra de embalagem - Pedido #${numero}`,
+      `${cliente.nome} - ${cliente.cidade}${pedido.amostraEmbalagemObs ? ` | Obs: ${pedido.amostraEmbalagemObs}` : ''}`,
+      'NOVO_PEDIDO',
+      { pedidoId: pedido.id }
+    )
+  }
 
   return res.status(201).json(pedido)
 }

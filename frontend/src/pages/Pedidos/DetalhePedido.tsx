@@ -106,6 +106,17 @@ export default function DetalhePedido() {
             <p className="text-sm text-gray-700 whitespace-pre-wrap">{pedido.observacoes}</p>
           </div>
         )}
+
+        {pedido.amostraEmbalagem != null && (
+          <div className="card md:col-span-2">
+            <h2 className="font-semibold mb-1">
+              {pedido.amostraEmbalagem ? '✅' : '⬜'} Amostra Embalagem
+            </h2>
+            {pedido.amostraEmbalagemObs && (
+              <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{pedido.amostraEmbalagemObs}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="card">
