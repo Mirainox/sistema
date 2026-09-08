@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { Role } from '@prisma/client'
 import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
-import { notificarPorRole, criarNotificacao } from '../services/notificacao.service'
+import { notificarPorRole } from '../services/notificacao.service'
 import { podeVer, podeVerTudo, SETORES_PEDIDO_ADMINISTRATIVO, SETORES_PEDIDO_PRODUCAO } from '../utils/visibilidade'
 
 function gerarNumeroPedido() {
@@ -164,25 +164,43 @@ export async function confirmarChecklist(req: AuthRequest, res: Response) {
   return res.json(pedido)
 }
 
-export async function confirmarPagamento(req: AuthRequest, res: Response) {
+// Revisão do Financeiro. Os dois campos ("Pagamento Confirmado" e "Comprovante
+// de Sinal") e a observação NÃO são obrigatórios e podem ser alterados a
+// qualquer momento (sem data fixa). O Financeiro pode liberar o pedido para a
+// produção mesmo com os campos desmarcados / documentos não anexados — nesse
+// caso a observação explica o motivo. Tudo isso chega ao Wellington para
+// conferência antes de gerar a O.S.
+export async function revisarFinanceiro(req: AuthRequest, res: Response) {
   const { id } = req.params
-  const pedido = await prisma.pedido.update({
-    where: { id },
-    data: { pagamentoConfirmado: true, status: 'FINANCEIRO_APROVADO' },
-  })
+  const { pagamentoConfirmado, comprovanteSinalConferido, financeiroObservacao, liberar } = req.body
 
-  const wellington = await prisma.usuario.findFirst({
-    where: { role: 'GERENTE_OPERACIONAL', ativo: true },
-  })
+  const existente = await prisma.pedido.findUnique({ where: { id } })
+  if (!existente) return res.status(404).json({ erro: 'Pedido não encontrado' })
 
-  if (wellington) {
-    await criarNotificacao({
-      usuarioId: wellington.id,
-      titulo: `Pedido #${pedido.numero} liberado para produção`,
-      mensagem: `Pagamento confirmado. Pedido liberado para distribuição da O.S.`,
-      tipo: 'NOVO_PEDIDO',
-      pedidoId: pedido.id,
-    })
+  const data: Record<string, unknown> = {}
+  if (pagamentoConfirmado !== undefined) data.pagamentoConfirmado = pagamentoConfirmado === true || pagamentoConfirmado === 'true'
+  if (comprovanteSinalConferido !== undefined) data.comprovanteSinalConferido = comprovanteSinalConferido === true || comprovanteSinalConferido === 'true'
+  if (financeiroObservacao !== undefined) data.financeiroObservacao = String(financeiroObservacao).trim() || null
+
+  const vaiLiberar = (liberar === true || liberar === 'true') && !existente.financeiroLiberadoEm
+  if (vaiLiberar) {
+    data.status = 'FINANCEIRO_APROVADO'
+    data.financeiroLiberadoEm = new Date()
+  }
+
+  const pedido = await prisma.pedido.update({ where: { id }, data })
+
+  if (vaiLiberar) {
+    const pagTxt = pedido.pagamentoConfirmado ? 'SIM' : 'NÃO'
+    const compTxt = pedido.comprovanteSinalConferido ? 'SIM' : 'NÃO'
+    const obs = pedido.financeiroObservacao ? ` | Observação: ${pedido.financeiroObservacao}` : ''
+    await notificarPorRole(
+      ['GERENTE_OPERACIONAL', 'GESTOR_ADMIN', 'ADMIN'],
+      `Pedido #${pedido.numero} liberado pelo Financeiro`,
+      `Pagamento confirmado: ${pagTxt} | Comprovante de sinal: ${compTxt}${obs} — Verifique e libere para a produção.`,
+      'NOVO_PEDIDO',
+      { pedidoId: pedido.id }
+    )
   }
 
   return res.json(pedido)

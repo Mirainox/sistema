@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { listar, buscar, criar, atualizar, atualizarStatus, atualizarComprovante, confirmarChecklist, confirmarPagamento } from '../controllers/pedidos.controller'
+import { listar, buscar, criar, atualizar, atualizarStatus, atualizarComprovante, confirmarChecklist, revisarFinanceiro } from '../controllers/pedidos.controller'
 import { autenticar } from '../middleware/auth'
 import { upload } from '../middleware/upload'
 
@@ -21,6 +21,6 @@ router.put('/:id', atualizar)
 router.patch('/:id/comprovante', upload.single('comprovanteSinal'), atualizarComprovante)
 router.patch('/:id/status', atualizarStatus)
 router.patch('/:id/checklist', confirmarChecklist)
-router.patch('/:id/pagamento', confirmarPagamento)
+router.patch('/:id/financeiro', revisarFinanceiro)
 
 export default router

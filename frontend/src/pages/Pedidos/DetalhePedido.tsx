@@ -16,7 +16,15 @@ export default function DetalhePedido() {
   const [salvandoComprovante, setSalvandoComprovante] = useState(false)
   const [erroComprovante, setErroComprovante] = useState('')
 
+  const [fPagamento, setFPagamento] = useState(false)
+  const [fComprovante, setFComprovante] = useState(false)
+  const [fObs, setFObs] = useState('')
+  const [salvandoFin, setSalvandoFin] = useState(false)
+  const [erroFin, setErroFin] = useState('')
+  const [okFin, setOkFin] = useState('')
+
   const podeMexerComprovante = hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL', 'FINANCEIRO')
+  const podeRevisarFinanceiro = hasRole('FINANCEIRO', 'ADMIN', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL')
 
   async function salvarComprovante() {
     if (!comprovanteFile) return
@@ -37,14 +45,35 @@ export default function DetalhePedido() {
   }
 
   useEffect(() => {
-    pedidosApi.buscar(id!).then(({ data }) => { setPedido(data); setLoading(false) })
+    pedidosApi.buscar(id!).then(({ data }) => {
+      setPedido(data)
+      setFPagamento(!!data.pagamentoConfirmado)
+      setFComprovante(!!data.comprovanteSinalConferido)
+      setFObs(data.financeiroObservacao || '')
+      setLoading(false)
+    })
   }, [id])
 
-  async function confirmarPagamento() {
-    if (!confirm('Confirmar o pagamento deste pedido?')) return
-    await pedidosApi.confirmarPagamento(id!)
-    const { data } = await pedidosApi.buscar(id!)
-    setPedido(data)
+  async function salvarFinanceiro(liberar: boolean) {
+    if (liberar && !confirm('Liberar este pedido para a produção? O Wellington será avisado para conferir.')) return
+    setSalvandoFin(true)
+    setErroFin('')
+    setOkFin('')
+    try {
+      await pedidosApi.revisarFinanceiro(id!, {
+        pagamentoConfirmado: fPagamento,
+        comprovanteSinalConferido: fComprovante,
+        financeiroObservacao: fObs,
+        liberar,
+      })
+      const { data } = await pedidosApi.buscar(id!)
+      setPedido(data)
+      setOkFin(liberar ? 'Pedido liberado para a produção. Wellington foi notificado.' : 'Alterações salvas.')
+    } catch (err: any) {
+      setErroFin(err.response?.data?.erro || 'Erro ao salvar a revisão do financeiro')
+    } finally {
+      setSalvandoFin(false)
+    }
   }
 
   async function gerarOS() {
@@ -128,32 +157,77 @@ export default function DetalhePedido() {
           <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.pagamentoConfirmado ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
             {pedido.pagamentoConfirmado ? '✅' : '⬜'} Pagamento Confirmado
           </div>
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.comprovanteSinalConferido ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
+            {pedido.comprovanteSinalConferido ? '✅' : '⬜'} Comprov. Sinal (Financeiro)
+          </div>
           <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.comprovanteSinal ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
-            {pedido.comprovanteSinal ? '✅' : '⬜'} Comprovante de Sinal
+            {pedido.comprovanteSinal ? '✅' : '⬜'} Comprovante de Sinal (anexo)
           </div>
           <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.os && pedido.os.length > 0 ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
             {pedido.os && pedido.os.length > 0 ? '✅' : '⬜'} O.S. Gerada
           </div>
         </div>
-        {!pedido.comprovanteSinal && (
-          <p className="text-xs text-amber-600 mt-3">
-            O comprovante de sinal ainda não foi anexado. O pedido segue normalmente; anexe o comprovante quando estiver disponível para concluir o processo.
+        {pedido.financeiroObservacao && (
+          <p className="text-xs text-gray-600 mt-3">
+            <span className="font-medium">Observação do Financeiro:</span> {pedido.financeiroObservacao}
           </p>
+        )}
+        {pedido.financeiroLiberadoEm && (
+          <p className="text-xs text-blue-600 mt-1">Liberado pelo Financeiro em {formatarData(pedido.financeiroLiberadoEm)}.</p>
         )}
       </div>
 
-      {hasRole('FINANCEIRO', 'ADMIN', 'GERENTE_OPERACIONAL') && !pedido.pagamentoConfirmado && pedido.status === 'AGUARDANDO_FINANCEIRO' && (
+      {podeRevisarFinanceiro && (pedido.status === 'AGUARDANDO_FINANCEIRO' || pedido.status === 'FINANCEIRO_APROVADO') && (
         <div className="card bg-yellow-50 border-yellow-200">
-          <h2 className="font-semibold text-yellow-800 mb-2">💰 Confirmação de Pagamento</h2>
-          <p className="text-sm text-yellow-700 mb-4">Confirme que o pagamento/sinal entrou na conta antes de liberar o pedido para produção.</p>
-          <button onClick={confirmarPagamento} className="btn-success">✅ Confirmar Pagamento e Liberar</button>
+          <h2 className="font-semibold text-yellow-800 mb-1">💰 Revisão do Financeiro</h2>
+          <p className="text-sm text-yellow-700 mb-4">
+            Marque o que já estiver ok. Nenhum campo é obrigatório e tudo pode ser alterado depois, sem data fixa.
+            Se liberar sem marcar algum item, explique o motivo na observação — o Wellington recebe essas informações para conferir antes de gerar a O.S.
+          </p>
+
+          <label className="flex items-center gap-3 mb-2 cursor-pointer">
+            <input type="checkbox" checked={fPagamento} onChange={(e) => setFPagamento(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+            <span className="font-medium">Pagamento Confirmado</span>
+          </label>
+          <label className="flex items-center gap-3 mb-3 cursor-pointer">
+            <input type="checkbox" checked={fComprovante} onChange={(e) => setFComprovante(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+            <span className="font-medium">Comprovante de Sinal</span>
+          </label>
+
+          <label className="label">Observação</label>
+          <textarea
+            value={fObs}
+            onChange={(e) => setFObs(e.target.value)}
+            rows={3}
+            placeholder="Ex.: liberando sem o comprovante porque o cliente enviará o sinal em 2 dias..."
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
+          {erroFin && <p className="text-sm text-red-600 mt-2">{erroFin}</p>}
+          {okFin && <p className="text-sm text-green-700 mt-2">{okFin}</p>}
+
+          <div className="flex gap-3 mt-4">
+            <button onClick={() => salvarFinanceiro(false)} disabled={salvandoFin} className="btn-secondary">
+              {salvandoFin ? 'Salvando...' : 'Salvar'}
+            </button>
+            {!pedido.financeiroLiberadoEm && (
+              <button onClick={() => salvarFinanceiro(true)} disabled={salvandoFin} className="btn-success">
+                ✅ Liberar para produção
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      {hasRole('GERENTE_OPERACIONAL', 'ADMIN') && pedido.pagamentoConfirmado && (!pedido.os || pedido.os.length === 0) && (
+      {hasRole('GERENTE_OPERACIONAL', 'ADMIN') && pedido.status === 'FINANCEIRO_APROVADO' && (!pedido.os || pedido.os.length === 0) && (
         <div className="card bg-blue-50 border-blue-200">
-          <h2 className="font-semibold text-blue-800 mb-2">🔧 Gerar Ordem de Serviço</h2>
-          <p className="text-sm text-blue-700 mb-4">Pagamento confirmado. Gere a O.S. para iniciar a distribuição à produção.</p>
+          <h2 className="font-semibold text-blue-800 mb-2">🔧 Conferir e Gerar Ordem de Serviço</h2>
+          <div className="text-sm text-blue-700 mb-4 space-y-1">
+            <p>{pedido.pagamentoConfirmado ? '✅' : '⚠️'} Pagamento confirmado: <strong>{pedido.pagamentoConfirmado ? 'SIM' : 'NÃO'}</strong></p>
+            <p>{pedido.comprovanteSinalConferido ? '✅' : '⚠️'} Comprovante de sinal (Financeiro): <strong>{pedido.comprovanteSinalConferido ? 'SIM' : 'NÃO'}</strong></p>
+            {pedido.financeiroObservacao && <p>📝 Observação do Financeiro: {pedido.financeiroObservacao}</p>}
+            <p className="text-xs">Confira os documentos/fotos acima antes de gerar a O.S.</p>
+          </div>
           <button onClick={gerarOS} className="btn-primary">🔧 Gerar O.S.</button>
         </div>
       )}

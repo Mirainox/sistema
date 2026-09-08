@@ -6,20 +6,44 @@ import { formatarData, formatarMoeda } from '../../utils/formatters'
 
 export default function PainelFinanceiro() {
   const [aguardando, setAguardando] = useState<Pedido[]>([])
+  const [liberados, setLiberados] = useState<Pedido[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    pedidosApi.listar({ status: 'AGUARDANDO_FINANCEIRO' }).then(({ data }) => {
-      setAguardando(data)
+    Promise.all([
+      pedidosApi.listar({ status: 'AGUARDANDO_FINANCEIRO' }),
+      pedidosApi.listar({ status: 'FINANCEIRO_APROVADO' }),
+    ]).then(([a, b]) => {
+      setAguardando(a.data)
+      setLiberados(b.data)
       setLoading(false)
     })
   }, [])
 
-  async function confirmar(id: string) {
-    if (!confirm('Confirmar que o pagamento entrou na conta?')) return
-    await pedidosApi.confirmarPagamento(id)
-    const { data } = await pedidosApi.listar({ status: 'AGUARDANDO_FINANCEIRO' })
-    setAguardando(data)
+  function LinhaPedido({ p, cor }: { p: Pedido; cor: string }) {
+    return (
+      <div className={`flex items-center justify-between p-4 border rounded-xl ${cor}`}>
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-semibold text-blue-600">#{p.numero}</span>
+            {p.financeiroLiberadoEm && <span className="text-xs text-blue-600">liberado em {formatarData(p.financeiroLiberadoEm)}</span>}
+          </div>
+          <p className="text-sm"><strong>{p.cliente.nome}</strong> - {p.cliente.cidade}/{p.cliente.estado}</p>
+          <p className="text-sm text-gray-600">{p.equipamento} {p.modelo}</p>
+          <p className="text-sm">
+            <span className="text-gray-500">Valor: </span><strong>{formatarMoeda(p.valorTotal)}</strong>
+            {' | '}<span className="text-gray-500">Pagamento: </span>{p.condicaoPagamento}
+            {' | '}<span className="text-gray-500">Prazo: </span>{formatarData(p.prazoEntrega)}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            {p.pagamentoConfirmado ? '✅' : '⬜'} Pagamento confirmado &nbsp;·&nbsp;
+            {p.comprovanteSinalConferido ? '✅' : '⬜'} Comprovante de sinal
+            {p.financeiroObservacao ? ` · 📝 ${p.financeiroObservacao}` : ''}
+          </p>
+        </div>
+        <Link to={`/pedidos/${p.id}`} className="btn-primary text-sm whitespace-nowrap">Revisar / Liberar</Link>
+      </div>
+    )
   }
 
   return (
@@ -27,41 +51,35 @@ export default function PainelFinanceiro() {
       <h1 className="text-2xl font-bold text-gray-900">Painel Financeiro</h1>
 
       <div className="card">
-        <h2 className="font-semibold mb-4 text-yellow-700">⏳ Pedidos Aguardando Confirmação de Pagamento</h2>
-        <p className="text-sm text-gray-500 mb-4">Confirme o recebimento do sinal/pagamento para liberar o pedido para a produção.</p>
+        <h2 className="font-semibold mb-2 text-yellow-700">⏳ Pedidos Aguardando o Financeiro</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Abra o pedido para marcar "Pagamento Confirmado" / "Comprovante de Sinal" (nenhum é obrigatório),
+          registrar uma observação e liberar para a produção. Tudo pode ser ajustado depois.
+        </p>
 
         {loading ? <div className="text-center py-8 text-gray-500">Carregando...</div> : (
           aguardando.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-5xl mb-3">✅</p>
-              <p className="text-gray-500">Todos os pagamentos estão confirmados!</p>
+              <p className="text-gray-500">Nenhum pedido aguardando o financeiro.</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {aguardando.map((p) => (
-                <div key={p.id} className="flex items-center justify-between p-4 border border-yellow-200 rounded-xl bg-yellow-50">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-blue-600">#{p.numero}</span>
-                    </div>
-                    <p className="text-sm"><strong>{p.cliente.nome}</strong> - {p.cliente.cidade}/{p.cliente.estado}</p>
-                    <p className="text-sm text-gray-600">{p.equipamento} {p.modelo}</p>
-                    <p className="text-sm">
-                      <span className="text-gray-500">Valor: </span><strong>{formatarMoeda(p.valorTotal)}</strong>
-                      {' | '}<span className="text-gray-500">Pagamento: </span>{p.condicaoPagamento}
-                      {' | '}<span className="text-gray-500">Prazo: </span>{formatarData(p.prazoEntrega)}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="btn-success text-sm" onClick={() => confirmar(p.id)}>✅ Confirmar Pagamento</button>
-                    <Link to={`/pedidos/${p.id}`} className="btn-secondary text-sm">Ver pedido</Link>
-                  </div>
-                </div>
-              ))}
+              {aguardando.map((p) => <LinhaPedido key={p.id} p={p} cor="border-yellow-200 bg-yellow-50" />)}
             </div>
           )
         )}
       </div>
+
+      {liberados.length > 0 && (
+        <div className="card">
+          <h2 className="font-semibold mb-2 text-blue-700">📤 Liberados para a produção</h2>
+          <p className="text-sm text-gray-500 mb-4">Já liberados. Você ainda pode abrir e ajustar os campos e a observação.</p>
+          <div className="space-y-3">
+            {liberados.map((p) => <LinhaPedido key={p.id} p={p} cor="border-blue-200 bg-blue-50" />)}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

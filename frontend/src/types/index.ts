@@ -58,6 +58,9 @@ export interface Pedido {
   status: StatusPedido
   checklistComercial: boolean
   pagamentoConfirmado: boolean
+  comprovanteSinalConferido?: boolean
+  financeiroObservacao?: string | null
+  financeiroLiberadoEm?: string | null
   observacoesTecnicas?: string
   observacoes?: string | null
   amostraEmbalagem?: boolean | null

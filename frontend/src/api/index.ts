@@ -26,7 +26,10 @@ export const pedidosApi = {
     api.patch(`/pedidos/${id}/comprovante`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   atualizarStatus: (id: string, status: string) => api.patch(`/pedidos/${id}/status`, { status }),
   confirmarChecklist: (id: string) => api.patch(`/pedidos/${id}/checklist`),
-  confirmarPagamento: (id: string) => api.patch(`/pedidos/${id}/pagamento`),
+  revisarFinanceiro: (
+    id: string,
+    data: { pagamentoConfirmado?: boolean; comprovanteSinalConferido?: boolean; financeiroObservacao?: string; liberar?: boolean },
+  ) => api.patch(`/pedidos/${id}/financeiro`, data),
 }
 
 export const osApi = {

@@ -190,6 +190,9 @@ model Pedido {
   comprovanteSinal     String?
   checklistComercial   Boolean      @default(false)
   pagamentoConfirmado  Boolean      @default(false)
+  comprovanteSinalConferido Boolean  @default(false)
+  financeiroObservacao String?
+  financeiroLiberadoEm DateTime?
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
 
