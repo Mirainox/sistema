@@ -4,6 +4,7 @@ import { comprasApi } from '../../api'
 import { Compra } from '../../types'
 import { formatarData, STATUS_COMPRA_COR, STATUS_COMPRA_LABEL } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
+import PageHeader from '../../components/PageHeader'
 
 export default function ListaCompras() {
   const { hasRole } = useAuth()
@@ -27,12 +28,12 @@ export default function ListaCompras() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Compras</h1>
-        {hasRole('ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL', 'COMPRADOR', 'PRODUCAO') && (
+      <PageHeader
+        title="Compras"
+        actions={hasRole('ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL', 'COMPRADOR', 'PRODUCAO') && (
           <Link to="/compras/nova" className="btn-primary">+ Solicitar Compra</Link>
         )}
-      </div>
+      />
 
       <div className="card">
         <div className="flex gap-4 mb-4">

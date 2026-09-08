@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { comprasApi } from '../../api'
 import { Setor } from '../../types'
 import { SETOR_LABEL } from '../../utils/formatters'
+import PageHeader from '../../components/PageHeader'
 
 export default function NovaCompra() {
   const navigate = useNavigate()
@@ -40,10 +41,7 @@ export default function NovaCompra() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Solicitar Compra</h1>
-        <button onClick={() => navigate('/compras')} className="btn-secondary">← Voltar</button>
-      </div>
+      <PageHeader title="Solicitar Compra" back="/compras" />
 
       <form onSubmit={handleSubmit} className="card space-y-4">
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">

@@ -5,6 +5,16 @@ import { Pedido } from '../../types'
 import { formatarData, formatarMoeda, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL, STATUS_OS_COR, STATUS_OS_LABEL } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
 import AnexoDocumentoInput from '../../components/AnexoDocumentoInput'
+import PageHeader from '../../components/PageHeader'
+
+function Chip({ ok, warn, children }: { ok: boolean; warn?: boolean; children: React.ReactNode }) {
+  return (
+    <span className={`chip ${ok ? 'chip--on' : warn ? 'chip--warn' : 'chip--off'}`}>
+      <span>{ok ? '✅' : '⬜'}</span>
+      {children}
+    </span>
+  )
+}
 
 export default function DetalhePedido() {
   const { id } = useParams()
@@ -85,128 +95,103 @@ export default function DetalhePedido() {
   if (loading) return <div className="text-center py-8 text-gray-500">Carregando...</div>
   if (!pedido) return <div className="text-center py-8 text-red-500">Pedido não encontrado</div>
 
+  const temDocumentos = (pedido.fotos && pedido.fotos.length > 0) || pedido.comprovanteSinal
+  const temObservacoes = pedido.observacoesTecnicas || pedido.observacoes || pedido.amostraEmbalagem != null
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pedido #{pedido.numero}</h1>
-          <p className="text-gray-500">Criado em {formatarData(pedido.createdAt)}</p>
-        </div>
-        <div className="flex gap-2">
+      <PageHeader
+        title={`Pedido #${pedido.numero}`}
+        subtitle={`Criado em ${formatarData(pedido.createdAt)}`}
+        back="/pedidos"
+        actions={
           <span className={`text-sm px-3 py-1 rounded-full font-medium ${STATUS_PEDIDO_COR[pedido.status]}`}>
             {STATUS_PEDIDO_LABEL[pedido.status]}
           </span>
-          <button onClick={() => navigate('/pedidos')} className="btn-secondary">← Voltar</button>
+        }
+      />
+
+      {/* ---------- Resumo ---------- */}
+      <div className="card">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+          <div>
+            <h2 className="section-title">Cliente</h2>
+            <dl className="dl">
+              <dt>Nome</dt><dd>{pedido.cliente.nome}</dd>
+              <dt>Cidade</dt><dd>{pedido.cliente.cidade}/{pedido.cliente.estado}</dd>
+              {pedido.cliente.telefone && (<><dt>Telefone</dt><dd>{pedido.cliente.telefone}</dd></>)}
+              {pedido.cliente.email && (<><dt>Email</dt><dd>{pedido.cliente.email}</dd></>)}
+            </dl>
+          </div>
+          <div>
+            <h2 className="section-title">Equipamento</h2>
+            <dl className="dl">
+              <dt>Equipamento</dt><dd>{pedido.equipamento}</dd>
+              <dt>Modelo</dt><dd>{pedido.modelo}</dd>
+              <dt>Valor</dt><dd>{formatarMoeda(pedido.valorTotal)}</dd>
+              <dt>Prazo</dt><dd>{formatarData(pedido.prazoEntrega)}</dd>
+              <dt>Pagamento</dt><dd>{pedido.condicaoPagamento}</dd>
+            </dl>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="card">
-          <h2 className="font-semibold mb-3">Cliente</h2>
-          <div className="space-y-1 text-sm">
-            <p><span className="text-gray-500">Nome:</span> <strong>{pedido.cliente.nome}</strong></p>
-            <p><span className="text-gray-500">Cidade:</span> {pedido.cliente.cidade}/{pedido.cliente.estado}</p>
-            {pedido.cliente.telefone && <p><span className="text-gray-500">Tel:</span> {pedido.cliente.telefone}</p>}
-            {pedido.cliente.email && <p><span className="text-gray-500">Email:</span> {pedido.cliente.email}</p>}
-          </div>
+      {/* ---------- Andamento ---------- */}
+      <div className="card">
+        <h2 className="section-title">Andamento do processo</h2>
+        <div className="flex flex-wrap gap-2">
+          <Chip ok={pedido.checklistComercial}>Checklist Comercial</Chip>
+          <Chip ok={pedido.pagamentoConfirmado}>Pagamento Confirmado</Chip>
+          <Chip ok={!!pedido.comprovanteSinalConferido}>Comprov. Sinal (Financeiro)</Chip>
+          <Chip ok={!!pedido.comprovanteSinal} warn>Comprovante de Sinal (anexo)</Chip>
+          <Chip ok={!!(pedido.os && pedido.os.length > 0)}>O.S. Gerada</Chip>
         </div>
-
-        <div className="card">
-          <h2 className="font-semibold mb-3">Equipamento</h2>
-          <div className="space-y-1 text-sm">
-            <p><span className="text-gray-500">Equipamento:</span> <strong>{pedido.equipamento}</strong></p>
-            <p><span className="text-gray-500">Modelo:</span> {pedido.modelo}</p>
-            <p><span className="text-gray-500">Valor:</span> <strong>{formatarMoeda(pedido.valorTotal)}</strong></p>
-            <p><span className="text-gray-500">Prazo:</span> {formatarData(pedido.prazoEntrega)}</p>
-            <p><span className="text-gray-500">Pagamento:</span> {pedido.condicaoPagamento}</p>
-          </div>
-        </div>
-
-        {pedido.observacoesTecnicas && (
-          <div className="card md:col-span-2">
-            <h2 className="font-semibold mb-2">Observações Técnicas</h2>
-            <p className="text-sm text-gray-700">{pedido.observacoesTecnicas}</p>
-          </div>
-        )}
-
-        {pedido.observacoes && (
-          <div className="card md:col-span-2">
-            <h2 className="font-semibold mb-2">Observações do Vendedor</h2>
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">{pedido.observacoes}</p>
-          </div>
-        )}
-
-        {pedido.amostraEmbalagem != null && (
-          <div className="card md:col-span-2">
-            <h2 className="font-semibold mb-1">
-              {pedido.amostraEmbalagem ? '✅' : '⬜'} Amostra Embalagem
-            </h2>
-            {pedido.amostraEmbalagemObs && (
-              <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{pedido.amostraEmbalagemObs}</p>
+        {(pedido.financeiroObservacao || pedido.financeiroLiberadoEm) && (
+          <div className="mt-3 text-xs text-gray-600 space-y-1">
+            {pedido.financeiroObservacao && (
+              <p><span className="font-medium">Observação do Financeiro:</span> {pedido.financeiroObservacao}</p>
+            )}
+            {pedido.financeiroLiberadoEm && (
+              <p className="text-blue-600">Liberado pelo Financeiro em {formatarData(pedido.financeiroLiberadoEm)}.</p>
             )}
           </div>
         )}
       </div>
 
-      <div className="card">
-        <h2 className="font-semibold mb-3">Status do Processo</h2>
-        <div className="flex flex-wrap gap-4">
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.checklistComercial ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
-            {pedido.checklistComercial ? '✅' : '⬜'} Checklist Comercial
-          </div>
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.pagamentoConfirmado ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
-            {pedido.pagamentoConfirmado ? '✅' : '⬜'} Pagamento Confirmado
-          </div>
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.comprovanteSinalConferido ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
-            {pedido.comprovanteSinalConferido ? '✅' : '⬜'} Comprov. Sinal (Financeiro)
-          </div>
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.comprovanteSinal ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
-            {pedido.comprovanteSinal ? '✅' : '⬜'} Comprovante de Sinal (anexo)
-          </div>
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${pedido.os && pedido.os.length > 0 ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'}`}>
-            {pedido.os && pedido.os.length > 0 ? '✅' : '⬜'} O.S. Gerada
-          </div>
-        </div>
-        {pedido.financeiroObservacao && (
-          <p className="text-xs text-gray-600 mt-3">
-            <span className="font-medium">Observação do Financeiro:</span> {pedido.financeiroObservacao}
-          </p>
-        )}
-        {pedido.financeiroLiberadoEm && (
-          <p className="text-xs text-blue-600 mt-1">Liberado pelo Financeiro em {formatarData(pedido.financeiroLiberadoEm)}.</p>
-        )}
-      </div>
-
+      {/* ---------- Ações ---------- */}
       {podeRevisarFinanceiro && (pedido.status === 'AGUARDANDO_FINANCEIRO' || pedido.status === 'FINANCEIRO_APROVADO') && (
-        <div className="card bg-yellow-50 border-yellow-200">
-          <h2 className="font-semibold text-yellow-800 mb-1">💰 Revisão do Financeiro</h2>
-          <p className="text-sm text-yellow-700 mb-4">
-            Marque o que já estiver ok. Nenhum campo é obrigatório e tudo pode ser alterado depois, sem data fixa.
-            Se liberar sem marcar algum item, explique o motivo na observação — o Wellington recebe essas informações para conferir antes de gerar a O.S.
+        <div className="note note--warn">
+          <h2 className="font-semibold mb-1">💰 Revisão do Financeiro</h2>
+          <p className="text-sm mb-4 text-amber-700">
+            Nenhum campo é obrigatório e tudo pode ser alterado depois, sem data fixa. Se liberar sem marcar
+            algum item, explique o motivo na observação — o Wellington recebe essas informações para conferir
+            antes de gerar a O.S.
           </p>
 
-          <label className="flex items-center gap-3 mb-2 cursor-pointer">
-            <input type="checkbox" checked={fPagamento} onChange={(e) => setFPagamento(e.target.checked)} className="w-4 h-4 accent-blue-600" />
-            <span className="font-medium">Pagamento Confirmado</span>
-          </label>
-          <label className="flex items-center gap-3 mb-3 cursor-pointer">
-            <input type="checkbox" checked={fComprovante} onChange={(e) => setFComprovante(e.target.checked)} className="w-4 h-4 accent-blue-600" />
-            <span className="font-medium">Comprovante de Sinal</span>
-          </label>
+          <div className="bg-white rounded-lg border border-amber-200 p-4 space-y-2">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked={fPagamento} onChange={(e) => setFPagamento(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+              <span className="font-medium text-gray-800">Pagamento Confirmado</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked={fComprovante} onChange={(e) => setFComprovante(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+              <span className="font-medium text-gray-800">Comprovante de Sinal</span>
+            </label>
+          </div>
 
-          <label className="label">Observação</label>
+          <label className="label mt-4">Observação</label>
           <textarea
             value={fObs}
             onChange={(e) => setFObs(e.target.value)}
             rows={3}
             placeholder="Ex.: liberando sem o comprovante porque o cliente enviará o sinal em 2 dias..."
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="input text-sm"
           />
 
           {erroFin && <p className="text-sm text-red-600 mt-2">{erroFin}</p>}
           {okFin && <p className="text-sm text-green-700 mt-2">{okFin}</p>}
 
-          <div className="flex gap-3 mt-4">
+          <div className="flex flex-wrap gap-3 mt-4">
             <button onClick={() => salvarFinanceiro(false)} disabled={salvandoFin} className="btn-secondary">
               {salvandoFin ? 'Salvando...' : 'Salvar'}
             </button>
@@ -220,41 +205,21 @@ export default function DetalhePedido() {
       )}
 
       {hasRole('GERENTE_OPERACIONAL', 'ADMIN') && pedido.status === 'FINANCEIRO_APROVADO' && (!pedido.os || pedido.os.length === 0) && (
-        <div className="card bg-blue-50 border-blue-200">
-          <h2 className="font-semibold text-blue-800 mb-2">🔧 Conferir e Gerar Ordem de Serviço</h2>
-          <div className="text-sm text-blue-700 mb-4 space-y-1">
+        <div className="note note--info">
+          <h2 className="font-semibold mb-2">🔧 Conferir e gerar Ordem de Serviço</h2>
+          <div className="text-sm mb-4 space-y-1 text-blue-700">
             <p>{pedido.pagamentoConfirmado ? '✅' : '⚠️'} Pagamento confirmado: <strong>{pedido.pagamentoConfirmado ? 'SIM' : 'NÃO'}</strong></p>
             <p>{pedido.comprovanteSinalConferido ? '✅' : '⚠️'} Comprovante de sinal (Financeiro): <strong>{pedido.comprovanteSinalConferido ? 'SIM' : 'NÃO'}</strong></p>
             {pedido.financeiroObservacao && <p>📝 Observação do Financeiro: {pedido.financeiroObservacao}</p>}
-            <p className="text-xs">Confira os documentos/fotos acima antes de gerar a O.S.</p>
+            <p className="text-xs">Confira os documentos e fotos antes de gerar a O.S.</p>
           </div>
           <button onClick={gerarOS} className="btn-primary">🔧 Gerar O.S.</button>
         </div>
       )}
 
-      {((pedido.fotos && pedido.fotos.length > 0) || pedido.comprovanteSinal) && (
-        <div className="card">
-          <h2 className="font-semibold mb-3">📎 Documentos do Pedido</h2>
-          <div className="space-y-2">
-            {pedido.fotos?.map((foto) => (
-              <a key={foto.id} href={foto.url} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                <span className="font-medium text-sm">{foto.descricao || 'Documento'}</span>
-                <span className="text-xs text-blue-600">Abrir →</span>
-              </a>
-            ))}
-            {pedido.comprovanteSinal && (
-              <a href={pedido.comprovanteSinal} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                <span className="font-medium text-sm">Comprovante de Sinal</span>
-                <span className="text-xs text-blue-600">Abrir →</span>
-              </a>
-            )}
-          </div>
-        </div>
-      )}
-
       {podeMexerComprovante && (
-        <div className={`card ${pedido.comprovanteSinal ? '' : 'bg-amber-50 border-amber-200'}`}>
-          <h2 className="font-semibold mb-2">
+        <div className={`card ${pedido.comprovanteSinal ? '' : 'border-amber-200 bg-amber-50'}`}>
+          <h2 className="section-title">
             {pedido.comprovanteSinal ? '🔄 Substituir Comprovante de Sinal' : '📤 Anexar Comprovante de Sinal'}
           </h2>
           <p className="text-sm text-gray-600 mb-3">
@@ -264,22 +229,72 @@ export default function DetalhePedido() {
           </p>
           <AnexoDocumentoInput value={comprovanteFile} onChange={setComprovanteFile} />
           {erroComprovante && <p className="text-sm text-red-600 mt-2">{erroComprovante}</p>}
-          <button
-            onClick={salvarComprovante}
-            disabled={!comprovanteFile || salvandoComprovante}
-            className="btn-primary mt-3"
-          >
+          <button onClick={salvarComprovante} disabled={!comprovanteFile || salvandoComprovante} className="btn-primary mt-3">
             {salvandoComprovante ? 'Salvando...' : pedido.comprovanteSinal ? 'Substituir comprovante' : 'Salvar comprovante'}
           </button>
         </div>
       )}
 
+      {/* ---------- Documentos ---------- */}
+      {temDocumentos && (
+        <div className="card">
+          <h2 className="section-title">📎 Documentos do pedido</h2>
+          <div className="space-y-2">
+            {pedido.fotos?.map((foto) => (
+              <a key={foto.id} href={foto.url} target="_blank" rel="noreferrer" className="doc-row">
+                <span className="font-medium text-sm">{foto.descricao || 'Documento'}</span>
+                <span className="text-xs text-blue-600">Abrir →</span>
+              </a>
+            ))}
+            {pedido.comprovanteSinal && (
+              <a href={pedido.comprovanteSinal} target="_blank" rel="noreferrer" className="doc-row">
+                <span className="font-medium text-sm">Comprovante de Sinal</span>
+                <span className="text-xs text-blue-600">Abrir →</span>
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ---------- Observações ---------- */}
+      {temObservacoes && (
+        <div className="card space-y-4">
+          <h2 className="section-title">Observações</h2>
+
+          {pedido.observacoesTecnicas && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-1">Observações técnicas</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{pedido.observacoesTecnicas}</p>
+            </div>
+          )}
+
+          {pedido.observacoes && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-1">Observações do vendedor</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{pedido.observacoes}</p>
+            </div>
+          )}
+
+          {pedido.amostraEmbalagem != null && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-1">
+                {pedido.amostraEmbalagem ? '✅' : '⬜'} Amostra Embalagem
+              </p>
+              {pedido.amostraEmbalagemObs && (
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{pedido.amostraEmbalagemObs}</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ---------- Ordens de Serviço ---------- */}
       {pedido.os && pedido.os.length > 0 && (
         <div className="card">
-          <h2 className="font-semibold mb-3">Ordens de Serviço</h2>
+          <h2 className="section-title">Ordens de Serviço</h2>
           <div className="space-y-2">
             {pedido.os.map((os: any) => (
-              <Link key={os.id} to={`/os/${os.id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+              <Link key={os.id} to={`/os/${os.id}`} className="doc-row">
                 <span className="font-medium">#{os.numero}</span>
                 <span className={`text-xs px-2 py-1 rounded-full ${STATUS_OS_COR[os.status]}`}>{STATUS_OS_LABEL[os.status]}</span>
               </Link>

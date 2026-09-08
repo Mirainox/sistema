@@ -1,13 +1,12 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { authApi } from '../api'
 import { useAuth } from '../contexts/AuthContext'
 import SenhaInput from '../components/SenhaInput'
+import PageHeader from '../components/PageHeader'
 import { SETOR_LABEL, ROLE_LABEL } from '../utils/formatters'
 
 export default function Perfil() {
   const { usuario, aplicarPerfil } = useAuth()
-  const navigate = useNavigate()
   const fotoRef = useRef<HTMLInputElement>(null)
 
   const [nome, setNome] = useState(usuario?.nome || '')
@@ -85,10 +84,7 @@ export default function Perfil() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Meu Perfil</h1>
-        <button onClick={() => navigate(-1)} className="btn-secondary">← Voltar</button>
-      </div>
+      <PageHeader title="Meu Perfil" back />
 
       <form onSubmit={salvarPerfil} className="card space-y-5">
         <div className="flex items-center gap-4">

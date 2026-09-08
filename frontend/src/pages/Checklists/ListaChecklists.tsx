@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { checklistsApi } from '../../api'
 import { formatarDataHora } from '../../utils/formatters'
+import PageHeader from '../../components/PageHeader'
 
 const TIPO_LABEL: Record<string, string> = {
   COMERCIAL_VENDEDOR: 'Checklist Comercial',
@@ -24,10 +25,10 @@ export default function ListaChecklists() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Checklists</h1>
-        <Link to="/checklists/sexta" className="btn-primary">+ Checklist de Sexta</Link>
-      </div>
+      <PageHeader
+        title="Checklists"
+        actions={<Link to="/checklists/sexta" className="btn-primary">+ Checklist de Sexta</Link>}
+      />
 
       <div className="card">
         {loading ? <div className="text-center py-8 text-gray-500">Carregando...</div> : (

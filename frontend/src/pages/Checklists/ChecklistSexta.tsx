@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { SETOR_LABEL } from '../../utils/formatters'
 import { Setor } from '../../types'
 import FotoInput from '../../components/FotoInput'
+import PageHeader from '../../components/PageHeader'
 
 const ITENS_ORGANIZACAO = [
   'Lâmpadas apagadas', 'Ferramentas levantadas', 'Ferramentas guardadas',
@@ -78,10 +79,10 @@ export default function ChecklistSexta() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Checklist de Sexta-feira</h1>
-        <p className="text-gray-500">{SETOR_LABEL[usuario?.setor as Setor] || usuario?.setor} - {new Date().toLocaleDateString('pt-BR')}</p>
-      </div>
+      <PageHeader
+        title="Checklist de Sexta-feira"
+        subtitle={`${SETOR_LABEL[usuario?.setor as Setor] || usuario?.setor} · ${new Date().toLocaleDateString('pt-BR')}`}
+      />
 
       {usuario?.setor === 'USINAGEM' && (
         <div className="flex gap-2">

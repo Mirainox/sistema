@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { expedicaoApi } from '../../api'
 import { formatarData } from '../../utils/formatters'
+import PageHeader from '../../components/PageHeader'
 
 export default function ListaExpedicao() {
   const [lista, setLista] = useState<any[]>([])
@@ -32,10 +33,10 @@ export default function ListaExpedicao() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Expedição</h1>
-        <button className="btn-primary" onClick={() => setModal(true)}>+ Nova Expedição</button>
-      </div>
+      <PageHeader
+        title="Expedição"
+        actions={<button className="btn-primary" onClick={() => setModal(true)}>+ Nova Expedição</button>}
+      />
 
       <div className="card">
         {loading ? <div className="text-center py-8 text-gray-500">Carregando...</div> : (

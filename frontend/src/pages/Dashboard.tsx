@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { dashboardApi } from '../api'
 import { DashboardResumo } from '../types'
 import { formatarData, formatarMoeda, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL } from '../utils/formatters'
+import PageHeader from '../components/PageHeader'
 
 interface CardProps { titulo: string; valor: number | string; cor: string; icon: string; link: string }
 
@@ -38,10 +39,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500">Visão geral da operação Mirainox</p>
-      </div>
+      <PageHeader title="Dashboard" subtitle="Visão geral da operação Mirainox" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <CardResumo titulo="Total de Pedidos" valor={totais.totalPedidos} cor="border-blue-500" icon="📋" link="/pedidos" />

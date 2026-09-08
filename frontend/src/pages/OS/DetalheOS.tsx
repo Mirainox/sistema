@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { osApi, checklistsApi } from '../../api'
 import { OS, Setor } from '../../types'
 import { formatarData, STATUS_OS_LABEL, STATUS_OS_COR, SETOR_LABEL } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
+import PageHeader from '../../components/PageHeader'
 
 const SETORES_PRODUCAO: { setor: Setor; label: string }[] = [
   { setor: 'ALMOXARIFADO_GERAL', label: 'Almoxarifado' },
@@ -16,7 +17,6 @@ const SETORES_PRODUCAO: { setor: Setor; label: string }[] = [
 
 export default function DetalheOS() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const { hasRole } = useAuth()
   const [os, setOs] = useState<OS | null>(null)
   const [loading, setLoading] = useState(true)
@@ -53,20 +53,18 @@ export default function DetalheOS() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">O.S. #{os.numero}</h1>
-          <p className="text-gray-500">Pedido #{os.pedido.numero} | Criada em {formatarData(os.createdAt)}</p>
-        </div>
-        <div className="flex gap-2">
+      <PageHeader
+        title={`O.S. #${os.numero}`}
+        subtitle={`Pedido #${os.pedido.numero} · Criada em ${formatarData(os.createdAt)}`}
+        back="/os"
+        actions={
           <span className={`text-sm px-3 py-1 rounded-full font-medium ${STATUS_OS_COR[os.status]}`}>{STATUS_OS_LABEL[os.status]}</span>
-          <button onClick={() => navigate('/os')} className="btn-secondary">← Voltar</button>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card">
-          <h2 className="font-semibold mb-3">Identificação Obrigatória</h2>
+          <h2 className="section-title">Identificação obrigatória</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-gray-500">Nº Pedido:</span> <strong>#{os.pedido.numero}</strong></div>
             <div className="flex justify-between"><span className="text-gray-500">Cliente:</span> <strong>{os.pedido.cliente.nome}</strong></div>
@@ -77,7 +75,7 @@ export default function DetalheOS() {
         </div>
 
         <div className="card">
-          <h2 className="font-semibold mb-3">Status da Distribuição</h2>
+          <h2 className="section-title">Status da distribuição</h2>
           <div className="space-y-2">
             {os.setoresOS.length === 0 ? (
               <p className="text-sm text-gray-500">Ainda não distribuída</p>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { pedidosApi } from '../../api'
 import { Pedido } from '../../types'
 import { formatarData, formatarMoeda } from '../../utils/formatters'
+import PageHeader from '../../components/PageHeader'
 
 export default function PainelFinanceiro() {
   const [aguardando, setAguardando] = useState<Pedido[]>([])
@@ -48,10 +49,10 @@ export default function PainelFinanceiro() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Painel Financeiro</h1>
+      <PageHeader title="Painel Financeiro" subtitle="Revise e libere pedidos para a produção" />
 
       <div className="card">
-        <h2 className="font-semibold mb-2 text-yellow-700">⏳ Pedidos Aguardando o Financeiro</h2>
+        <h2 className="section-title text-amber-700">⏳ Pedidos aguardando o Financeiro</h2>
         <p className="text-sm text-gray-500 mb-4">
           Abra o pedido para marcar "Pagamento Confirmado" / "Comprovante de Sinal" (nenhum é obrigatório),
           registrar uma observação e liberar para a produção. Tudo pode ser ajustado depois.
@@ -73,7 +74,7 @@ export default function PainelFinanceiro() {
 
       {liberados.length > 0 && (
         <div className="card">
-          <h2 className="font-semibold mb-2 text-blue-700">📤 Liberados para a produção</h2>
+          <h2 className="section-title text-blue-700">📤 Liberados para a produção</h2>
           <p className="text-sm text-gray-500 mb-4">Já liberados. Você ainda pode abrir e ajustar os campos e a observação.</p>
           <div className="space-y-3">
             {liberados.map((p) => <LinhaPedido key={p.id} p={p} cor="border-blue-200 bg-blue-50" />)}

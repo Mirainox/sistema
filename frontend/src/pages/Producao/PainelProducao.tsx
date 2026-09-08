@@ -5,6 +5,7 @@ import { OS } from '../../types'
 import { formatarData, STATUS_OS_COR, STATUS_OS_LABEL } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
 import FotoInput from '../../components/FotoInput'
+import PageHeader from '../../components/PageHeader'
 
 const SETORES_PRODUCAO = [
   { setor: 'PRODUCAO_INOX', label: 'Produção Inox', responsavel: 'Israel' },
@@ -53,7 +54,7 @@ export default function PainelProducao() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Painel de Produção</h1>
+      <PageHeader title="Painel de Produção" />
 
       {precisaFoto && (
         <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4">

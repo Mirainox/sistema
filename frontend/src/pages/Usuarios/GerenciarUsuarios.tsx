@@ -3,6 +3,7 @@ import { usuariosApi } from '../../api'
 import { SETOR_LABEL, ROLE_LABEL, formatarDataHora } from '../../utils/formatters'
 import { Setor, Role } from '../../types'
 import { useAuth } from '../../contexts/AuthContext'
+import PageHeader from '../../components/PageHeader'
 
 export default function GerenciarUsuarios() {
   const { hasRole } = useAuth()
@@ -43,10 +44,10 @@ export default function GerenciarUsuarios() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Usuários do Sistema</h1>
-        <button className="btn-primary" onClick={() => setModal(true)}>+ Novo Usuário</button>
-      </div>
+      <PageHeader
+        title="Usuários do Sistema"
+        actions={<button className="btn-primary" onClick={() => setModal(true)}>+ Novo Usuário</button>}
+      />
 
       <div className="card">
         {loading ? <div className="text-center py-8 text-gray-500">Carregando...</div> : (

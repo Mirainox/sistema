@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { comprasApi } from '../../api'
 import { Compra } from '../../types'
 import { formatarData } from '../../utils/formatters'
+import PageHeader from '../../components/PageHeader'
 
 export default function PainelFiscal() {
   const [comprasRealizadas, setComprasRealizadas] = useState<Compra[]>([])
@@ -16,7 +17,7 @@ export default function PainelFiscal() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Painel Fiscal</h1>
+      <PageHeader title="Painel Fiscal" />
 
       <div className="card">
         <h2 className="font-semibold mb-2 text-blue-700">🧾 Notas Fiscais Previstas</h2>

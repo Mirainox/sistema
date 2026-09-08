@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { rhApi, usuariosApi } from '../../api'
 import { formatarData } from '../../utils/formatters'
 import { SETOR_LABEL } from '../../utils/formatters'
+import PageHeader from '../../components/PageHeader'
 
 export default function ControleEPI() {
   const [epis, setEpis] = useState<any[]>([])
@@ -36,10 +37,10 @@ export default function ControleEPI() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">RH / Controle de EPIs</h1>
-        <button className="btn-primary" onClick={() => setModalAberto(true)}>+ Registrar Entrega de EPI</button>
-      </div>
+      <PageHeader
+        title="RH / Controle de EPIs"
+        actions={<button className="btn-primary" onClick={() => setModalAberto(true)}>+ Registrar Entrega de EPI</button>}
+      />
 
       <div className="card">
         {loading ? <div className="text-center py-8 text-gray-500">Carregando...</div> : (

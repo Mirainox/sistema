@@ -2,6 +2,30 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { pedidosApi } from '../../api'
 import AnexoDocumentoInput from '../../components/AnexoDocumentoInput'
+import PageHeader from '../../components/PageHeader'
+
+function DocItem({
+  titulo, opcional, ajuda, value, onChange,
+}: {
+  titulo: string
+  opcional?: boolean
+  ajuda?: string
+  value: File | null
+  onChange: (f: File | null) => void
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-1">
+        <input type="checkbox" checked={!!value} readOnly className="w-4 h-4 accent-blue-600" />
+        <h3 className="font-semibold">
+          {titulo}{opcional && <span className="text-sm font-normal text-gray-500"> (opcional)</span>}
+        </h3>
+      </div>
+      {ajuda && <p className="text-xs text-gray-500 mb-2">{ajuda}</p>}
+      <AnexoDocumentoInput value={value} onChange={onChange} />
+    </div>
+  )
+}
 
 export default function NovoPedido() {
   const navigate = useNavigate()
@@ -49,86 +73,74 @@ export default function NovoPedido() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Novo Pedido</h1>
-        <button onClick={() => navigate('/pedidos')} className="btn-secondary">← Voltar</button>
-      </div>
+      <PageHeader title="Novo Pedido" back="/pedidos" />
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="card">
-          <label className="flex items-center gap-3 mb-3">
-            <input type="checkbox" checked={!!pedidoGerado} readOnly className="w-4 h-4 accent-blue-600" />
-            <h2 className="font-semibold">Pedido Gerado</h2>
-          </label>
-          <AnexoDocumentoInput value={pedidoGerado} onChange={setPedidoGerado} />
+        <div className="card divide-y divide-gray-100">
+          <h2 className="section-title">Documentos obrigatórios</h2>
+          <div className="pt-4">
+            <DocItem titulo="Pedido Gerado" value={pedidoGerado} onChange={setPedidoGerado} />
+          </div>
+          <div className="pt-4">
+            <DocItem titulo="Pedido Gerado Produção" value={pedidoGeradoProducao} onChange={setPedidoGeradoProducao} />
+          </div>
+          <div className="pt-4">
+            <DocItem titulo="Pedido Assinado" value={pedidoAssinado} onChange={setPedidoAssinado} />
+          </div>
         </div>
 
-        <div className="card">
-          <label className="flex items-center gap-3 mb-3">
-            <input type="checkbox" checked={!!pedidoGeradoProducao} readOnly className="w-4 h-4 accent-blue-600" />
-            <h2 className="font-semibold">Pedido Gerado Produção</h2>
-          </label>
-          <AnexoDocumentoInput value={pedidoGeradoProducao} onChange={setPedidoGeradoProducao} />
-        </div>
+        <div className="card divide-y divide-gray-100">
+          <h2 className="section-title">Opcionais</h2>
 
-        <div className="card">
-          <label className="flex items-center gap-3 mb-3">
-            <input type="checkbox" checked={!!pedidoAssinado} readOnly className="w-4 h-4 accent-blue-600" />
-            <h2 className="font-semibold">Pedido Assinado</h2>
-          </label>
-          <AnexoDocumentoInput value={pedidoAssinado} onChange={setPedidoAssinado} />
-        </div>
-
-        <div className="card">
-          <label className="flex items-center gap-3 mb-1">
-            <input type="checkbox" checked={!!comprovanteSinal} readOnly className="w-4 h-4 accent-blue-600" />
-            <h2 className="font-semibold">Comprovante de Sinal <span className="text-sm font-normal text-gray-500">(opcional)</span></h2>
-          </label>
-          <p className="text-xs text-gray-500 mb-3">
-            Não é obrigatório agora. Você pode anexar ou substituir o comprovante depois,
-            a qualquer momento, na tela do pedido.
-          </p>
-          <AnexoDocumentoInput value={comprovanteSinal} onChange={setComprovanteSinal} />
-        </div>
-
-        <div className="card">
-          <label className="flex items-center gap-3 mb-1 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={amostraEmbalagem}
-              onChange={(e) => setAmostraEmbalagem(e.target.checked)}
-              className="w-4 h-4 accent-blue-600"
+          <div className="pt-4">
+            <DocItem
+              titulo="Comprovante de Sinal"
+              opcional
+              ajuda="Pode ser anexado ou substituído depois, a qualquer momento, na tela do pedido."
+              value={comprovanteSinal}
+              onChange={setComprovanteSinal}
             />
-            <h2 className="font-semibold">Amostra Embalagem <span className="text-sm font-normal text-gray-500">(opcional)</span></h2>
-          </label>
-          <p className="text-xs text-gray-500 mb-3">Marque o quadrado se houver amostra de embalagem. Não precisa anexar nada.</p>
-          <textarea
-            value={amostraEmbalagemObs}
-            onChange={(e) => setAmostraEmbalagemObs(e.target.value)}
-            rows={3}
-            placeholder="Observação sobre a amostra de embalagem..."
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+          </div>
 
-        <div className="card">
-          <h2 className="font-semibold mb-2">Observações <span className="text-sm font-normal text-gray-500">(opcional)</span></h2>
-          <textarea
-            value={observacoes}
-            onChange={(e) => setObservacoes(e.target.value)}
-            rows={4}
-            placeholder="Anotações do vendedor sobre este pedido..."
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="pt-4">
+            <label className="flex items-center gap-3 mb-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={amostraEmbalagem}
+                onChange={(e) => setAmostraEmbalagem(e.target.checked)}
+                className="w-4 h-4 accent-blue-600"
+              />
+              <h3 className="font-semibold">Amostra Embalagem <span className="text-sm font-normal text-gray-500">(opcional)</span></h3>
+            </label>
+            <p className="text-xs text-gray-500 mb-2">Marque o quadrado se houver amostra de embalagem. Não precisa anexar nada.</p>
+            <textarea
+              value={amostraEmbalagemObs}
+              onChange={(e) => setAmostraEmbalagemObs(e.target.value)}
+              rows={3}
+              placeholder="Observação sobre a amostra de embalagem..."
+              className="input text-sm"
+            />
+          </div>
+
+          <div className="pt-4">
+            <h3 className="font-semibold mb-2">Observações <span className="text-sm font-normal text-gray-500">(opcional)</span></h3>
+            <textarea
+              value={observacoes}
+              onChange={(e) => setObservacoes(e.target.value)}
+              rows={4}
+              placeholder="Anotações do vendedor sobre este pedido..."
+              className="input text-sm"
+            />
+          </div>
         </div>
 
         {erro && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{erro}</div>}
 
         {!tudoPronto && (
-          <p className="text-center text-sm text-amber-600">⚠️ Anexe os 3 documentos (Pedido Gerado, Pedido Gerado Produção e Pedido Assinado) para liberar o envio.</p>
+          <p className="text-sm text-amber-600">⚠️ Anexe os 3 documentos obrigatórios para liberar o envio.</p>
         )}
 
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           <button type="submit" className="btn-primary" disabled={loading || !tudoPronto}>
             {loading ? 'Salvando...' : 'Criar Pedido'}
           </button>

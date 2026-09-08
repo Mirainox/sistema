@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { manutencaoApi, usuariosApi } from '../../api'
 import { Manutencao } from '../../types'
 import { formatarData } from '../../utils/formatters'
+import PageHeader from '../../components/PageHeader'
 
 const STATUS_LABEL: Record<string, string> = { ABERTO: 'Aberto', EM_ANALISE: 'Em Análise', AGUARDANDO_PECAS: 'Aguardando Peças', EM_ATENDIMENTO: 'Em Atendimento', CONCLUIDO: 'Concluído', CANCELADO: 'Cancelado' }
 const STATUS_COR: Record<string, string> = { ABERTO: 'bg-red-100 text-red-700', EM_ANALISE: 'bg-yellow-100 text-yellow-700', AGUARDANDO_PECAS: 'bg-orange-100 text-orange-700', EM_ATENDIMENTO: 'bg-blue-100 text-blue-700', CONCLUIDO: 'bg-green-100 text-green-700', CANCELADO: 'bg-gray-100 text-gray-700' }
@@ -39,10 +40,10 @@ export default function ListaManutencao() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Manutenção e Atendimento Técnico</h1>
-        <button className="btn-primary" onClick={() => setModal(true)}>+ Nova Solicitação</button>
-      </div>
+      <PageHeader
+        title="Manutenção e Atendimento Técnico"
+        actions={<button className="btn-primary" onClick={() => setModal(true)}>+ Nova Solicitação</button>}
+      />
 
       <div className="card">
         {loading ? <div className="text-center py-8 text-gray-500">Carregando...</div> : (

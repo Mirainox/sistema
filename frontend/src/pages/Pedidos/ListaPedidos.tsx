@@ -4,6 +4,7 @@ import { pedidosApi } from '../../api'
 import { Pedido } from '../../types'
 import { formatarData, formatarMoeda, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
+import PageHeader from '../../components/PageHeader'
 
 export default function ListaPedidos() {
   const { hasRole } = useAuth()
@@ -27,12 +28,10 @@ export default function ListaPedidos() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Pedidos</h1>
-        {podeCriar && (
-          <Link to="/pedidos/novo" className="btn-primary">+ Novo Pedido</Link>
-        )}
-      </div>
+      <PageHeader
+        title="Pedidos"
+        actions={podeCriar && <Link to="/pedidos/novo" className="btn-primary">+ Novo Pedido</Link>}
+      />
 
       <div className="card">
         <div className="flex gap-4 mb-4">

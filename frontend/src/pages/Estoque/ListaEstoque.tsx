@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { estoqueApi } from '../../api'
 import { Estoque } from '../../types'
 import { useAuth } from '../../contexts/AuthContext'
+import PageHeader from '../../components/PageHeader'
 
 export default function ListaEstoque() {
   const { hasRole } = useAuth()
@@ -47,12 +48,12 @@ export default function ListaEstoque() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Almoxarifado</h1>
-        {hasRole('ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL') && (
+      <PageHeader
+        title="Almoxarifado"
+        actions={hasRole('ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL') && (
           <button className="btn-primary" onClick={() => setModalCriar(true)}>+ Novo Item</button>
         )}
-      </div>
+      />
 
       <div className="card">
         <div className="flex gap-4 mb-4">

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { osApi } from '../../api'
 import { OS } from '../../types'
 import { formatarData, STATUS_OS_COR, STATUS_OS_LABEL } from '../../utils/formatters'
+import PageHeader from '../../components/PageHeader'
 
 export default function ListaOS() {
   const [lista, setLista] = useState<OS[]>([])
@@ -21,7 +22,7 @@ export default function ListaOS() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900">Ordens de Serviço</h1>
+      <PageHeader title="Ordens de Serviço" />
 
       <div className="card">
         <div className="flex gap-4 mb-4">
