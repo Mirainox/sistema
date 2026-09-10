@@ -11,8 +11,8 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { label: 'Dashboard', path: '/', icon: '📊' },
-  { label: 'Pedidos', path: '/pedidos', icon: '📋', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'VENDEDOR', 'FINANCEIRO'] },
-  { label: 'Ordem de Pedido', path: '/os', icon: '⚙️', roles: ['ADMIN', 'DIRETOR', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO', 'ALMOXARIFE'] },
+  { label: 'Pedidos', path: '/pedidos', icon: '📋', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'VENDEDOR', 'FINANCEIRO', 'PROJETISTA'] },
+  { label: 'Ordem de Pedido', path: '/os', icon: '⚙️', roles: ['ADMIN', 'DIRETOR', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO', 'ALMOXARIFE', 'PROJETISTA'] },
   { label: 'Compras', path: '/compras', icon: '🛒', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'COMPRADOR', 'GERENTE_OPERACIONAL', 'ALMOXARIFE', 'PRODUCAO'] },
   { label: 'Almoxarifado', path: '/estoque', icon: '📦', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL'] },
   { label: 'Produção', path: '/producao', icon: '🏭', roles: ['ADMIN', 'DIRETOR', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO', 'ALMOXARIFE'] },

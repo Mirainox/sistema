@@ -92,6 +92,7 @@ export const SETOR_LABEL: Record<string, string> = {
   MANUTENCAO: 'Manutenção',
   EXPEDICAO: 'Expedição',
   TI: 'TI',
+  PROJETOS: 'Projetos e Desenhos',
 }
 
 export const ROLE_LABEL: Record<string, string> = {
@@ -111,6 +112,7 @@ export const ROLE_LABEL: Record<string, string> = {
   MARKETING: 'Marketing',
   LOJA_PECAS: 'Loja de Peças',
   EXPEDICAO: 'Expedição',
+  PROJETISTA: 'Projetos e Desenhos',
 }
 
 export const TIPO_OS_LABEL: Record<string, string> = {

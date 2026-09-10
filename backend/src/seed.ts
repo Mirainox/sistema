@@ -32,6 +32,7 @@ async function seed() {
     { nome: 'Felipe', email: 'felipe@mirainox.com.br', cargo: 'Loja de Peças', setor: 'LOJA_PECAS' as const, role: 'LOJA_PECAS' as const },
     { nome: 'Caio', email: 'caio@mirainox.com.br', cargo: 'TI / Marketing', setor: 'TI' as const, role: 'MARKETING' as const },
     { nome: 'Francisco Neto', email: 'francisco@mirainox.com.br', cargo: 'Arte Gráfica / Marketing', setor: 'MARKETING' as const, role: 'MARKETING' as const },
+    { nome: 'William', email: 'william@mirainox.com.br', cargo: 'Responsável por Projetos e Desenhos', setor: 'PROJETOS' as const, role: 'PROJETISTA' as const },
     { nome: 'Admin', email: 'admin@mirainox.com.br', cargo: 'Administrador do Sistema', setor: 'TI' as const, role: 'ADMIN' as const },
   ]
 
