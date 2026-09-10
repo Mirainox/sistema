@@ -151,7 +151,7 @@ export default function DetalhePedido() {
   }
 
   async function gerarOS() {
-    if (!confirm('Gerar O.S. para este pedido?')) return
+    if (!confirm('Gerar a Ordem de Pedido para a produção?')) return
     const { data } = await osApi.gerar(id!)
     navigate(`/os/${data.id}`)
   }
@@ -208,7 +208,7 @@ export default function DetalhePedido() {
           <Chip ok={!!pedido.comprovanteSinalConferido}>Comprov. Sinal (Financeiro)</Chip>
           <Chip ok={!!pedido.comprovanteSinal} warn>Comprovante de Sinal (anexo)</Chip>
           {pedido.aguardandoSinal && <span className="chip chip--warn"><span>⏳</span>Aguardando sinal</span>}
-          <Chip ok={!!(pedido.os && pedido.os.length > 0)}>O.S. Gerada</Chip>
+          <Chip ok={!!(pedido.os && pedido.os.length > 0)}>Ordem de Pedido gerada</Chip>
         </div>
         {(pedido.observacoes || pedido.observacoesComerciais || pedido.observacoesTecnicas) && (
           <div className="mt-4 border-t border-gray-100 pt-3 space-y-2">
@@ -337,7 +337,7 @@ export default function DetalhePedido() {
 
       {hasRole('GERENTE_OPERACIONAL', 'ADMIN') && pedido.status === 'FINANCEIRO_APROVADO' && (!pedido.os || pedido.os.length === 0) && (
         <div className="note note--info">
-          <h2 className="font-semibold mb-2">🏭 Conferir e liberar para a Produção</h2>
+          <h2 className="font-semibold mb-2">🏭 Conferir e gerar Ordem de Pedido</h2>
           <div className="text-sm mb-4 space-y-1 text-blue-700">
             <p>{pedido.pagamentoConfirmado ? '✅' : '⚠️'} Pagamento 100% confirmado: <strong>{pedido.pagamentoConfirmado ? 'SIM' : 'NÃO'}</strong></p>
             <p>{pedido.comprovanteSinalConferido ? '✅' : '⚠️'} Comprovante de sinal conferido: <strong>{pedido.comprovanteSinalConferido ? 'SIM' : 'NÃO'}</strong></p>
@@ -354,9 +354,9 @@ export default function DetalhePedido() {
             {pedido.aguardandoSinal && <p>⏳ <strong>AGUARDANDO SINAL</strong></p>}
             {pedido.financeiroObservacao && <p>📝 Observação do Financeiro: {pedido.financeiroObservacao}</p>}
             {pedido.observacoes && <p>📝 Observação do vendedor: {pedido.observacoes}</p>}
-            <p className="text-xs">Confira as observações, os documentos e as fotos antes de liberar.</p>
+            <p className="text-xs">Confira as observações, os documentos e as fotos antes de gerar a Ordem de Pedido.</p>
           </div>
-          <button onClick={gerarOS} className="btn-primary">🏭 Liberar para produção</button>
+          <button onClick={gerarOS} className="btn-primary">🏭 Gerar Ordem de Pedido</button>
         </div>
       )}
 
@@ -444,10 +444,10 @@ export default function DetalhePedido() {
         </div>
       )}
 
-      {/* ---------- Ordens de Serviço ---------- */}
+      {/* ---------- Ordem de Pedido (produção) ---------- */}
       {pedido.os && pedido.os.length > 0 && (
         <div className="card">
-          <h2 className="section-title">Ordens de Serviço</h2>
+          <h2 className="section-title">Ordem de Pedido</h2>
           <div className="space-y-2">
             {pedido.os.map((os: any) => (
               <Link key={os.id} to={`/os/${os.id}`} className="doc-row">
