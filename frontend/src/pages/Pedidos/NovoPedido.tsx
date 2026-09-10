@@ -35,6 +35,10 @@ export default function NovoPedido() {
   const [pedidoAssinado, setPedidoAssinado] = useState<File | null>(null)
   const [comprovanteSinal, setComprovanteSinal] = useState<File | null>(null)
   const [amostraEmbalagem, setAmostraEmbalagem] = useState(false)
+  const [amostraNaoSeAplica, setAmostraNaoSeAplica] = useState(false)
+  const [amostraPedidaCliente, setAmostraPedidaCliente] = useState(false)
+  const [amostraEnviada, setAmostraEnviada] = useState(false)
+  const [amostraChegou, setAmostraChegou] = useState(false)
   const [amostraEmbalagemObs, setAmostraEmbalagemObs] = useState('')
   const [observacoes, setObservacoes] = useState('')
 
@@ -59,7 +63,11 @@ export default function NovoPedido() {
       formData.append('pedidoGeradoProducao', pedidoGeradoProducao!)
       formData.append('pedidoAssinado', pedidoAssinado!)
       if (comprovanteSinal) formData.append('comprovanteSinal', comprovanteSinal)
-      formData.append('amostraEmbalagem', String(amostraEmbalagem))
+      formData.append('amostraNaoSeAplica', String(amostraNaoSeAplica))
+      formData.append('amostraEmbalagem', String(!amostraNaoSeAplica && amostraEmbalagem))
+      formData.append('amostraPedidaCliente', String(!amostraNaoSeAplica && amostraPedidaCliente))
+      formData.append('amostraEnviada', String(!amostraNaoSeAplica && amostraEnviada))
+      formData.append('amostraChegou', String(!amostraNaoSeAplica && amostraChegou))
       if (amostraEmbalagemObs.trim()) formData.append('amostraEmbalagemObs', amostraEmbalagemObs.trim())
       if (observacoes.trim()) formData.append('observacoes', observacoes.trim())
       const { data } = await pedidosApi.criar(formData)
@@ -103,22 +111,49 @@ export default function NovoPedido() {
           </div>
 
           <div className="pt-4">
-            <label className="flex items-center gap-3 mb-1 cursor-pointer">
+            <h3 className="font-semibold mb-1">Amostra de Embalagem <span className="text-sm font-normal text-gray-500">(opcional)</span></h3>
+            <p className="text-xs text-gray-500 mb-3">
+              Para equipamentos que dependem de embalagem (envasadoras, seladoras, etc.). Não precisa anexar nada —
+              o acompanhamento (pedida / enviada / chegou) também pode ser atualizado depois, na tela do pedido.
+            </p>
+
+            <label className="flex items-center gap-3 mb-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={amostraEmbalagem}
-                onChange={(e) => setAmostraEmbalagem(e.target.checked)}
+                checked={amostraNaoSeAplica}
+                onChange={(e) => setAmostraNaoSeAplica(e.target.checked)}
                 className="w-4 h-4 accent-blue-600"
               />
-              <h3 className="font-semibold">Amostra Embalagem <span className="text-sm font-normal text-gray-500">(opcional)</span></h3>
+              <span className="font-medium">Não se aplica (equipamento não depende de embalagem)</span>
             </label>
-            <p className="text-xs text-gray-500 mb-2">Marque o quadrado se houver amostra de embalagem. Não precisa anexar nada.</p>
+
+            {!amostraNaoSeAplica && (
+              <div className="space-y-2 border-l-2 border-gray-100 pl-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={amostraEmbalagem} onChange={(e) => setAmostraEmbalagem(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                  <span>Há amostra de embalagem</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={amostraPedidaCliente} onChange={(e) => setAmostraPedidaCliente(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                  <span>Amostra já pedida ao cliente</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={amostraEnviada} onChange={(e) => setAmostraEnviada(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                  <span>Amostra já enviada</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={amostraChegou} onChange={(e) => setAmostraChegou(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                  <span>Amostra já chegou na Mirainox</span>
+                </label>
+              </div>
+            )}
+
             <textarea
               value={amostraEmbalagemObs}
               onChange={(e) => setAmostraEmbalagemObs(e.target.value)}
               rows={3}
               placeholder="Observação sobre a amostra de embalagem..."
-              className="input text-sm"
+              className="input text-sm mt-3"
             />
           </div>
 

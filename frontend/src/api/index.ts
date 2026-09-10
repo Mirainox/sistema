@@ -28,8 +28,30 @@ export const pedidosApi = {
   confirmarChecklist: (id: string) => api.patch(`/pedidos/${id}/checklist`),
   revisarFinanceiro: (
     id: string,
-    data: { pagamentoConfirmado?: boolean; comprovanteSinalConferido?: boolean; financeiroObservacao?: string; liberar?: boolean },
+    data: {
+      pagamentoConfirmado?: boolean
+      comprovanteSinalConferido?: boolean
+      financeiroObservacao?: string
+      aguardandoSinal?: boolean
+      compValor?: number | null
+      compData?: string | null
+      compBanco?: string
+      compClienteConfere?: boolean
+      compPedidoConfere?: boolean
+      liberar?: boolean
+    },
   ) => api.patch(`/pedidos/${id}/financeiro`, data),
+  atualizarAmostra: (
+    id: string,
+    data: {
+      amostraEmbalagem?: boolean
+      amostraNaoSeAplica?: boolean
+      amostraPedidaCliente?: boolean
+      amostraEnviada?: boolean
+      amostraChegou?: boolean
+      amostraEmbalagemObs?: string
+    },
+  ) => api.patch(`/pedidos/${id}/amostra`, data),
 }
 
 export const osApi = {

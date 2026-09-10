@@ -49,15 +49,23 @@ export async function buscar(req: AuthRequest, res: Response) {
   const fotosVisiveis = pedido.fotos.filter((f) => podeVer(role, f.visivelPara))
   const ehVendedorDoPedido = pedido.vendedorId === req.usuario!.id
   const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role) || ehVendedorDoPedido
-  // Amostra Embalagem NAO deve ser vista pelo Financeiro nem pelo Fiscal.
+  // Amostra de Embalagem NAO deve ser vista pelo Financeiro nem pelo Fiscal.
   const amostraVisivel = role !== 'FINANCEIRO' && role !== 'FISCAL'
+
+  const amostraOculta = amostraVisivel ? {} : {
+    amostraEmbalagem: null,
+    amostraEmbalagemObs: null,
+    amostraNaoSeAplica: null,
+    amostraPedidaCliente: null,
+    amostraEnviada: null,
+    amostraChegou: null,
+  }
 
   return res.json({
     ...pedido,
     fotos: fotosVisiveis,
     comprovanteSinal: comprovanteVisivel ? pedido.comprovanteSinal : null,
-    amostraEmbalagem: amostraVisivel ? pedido.amostraEmbalagem : null,
-    amostraEmbalagemObs: amostraVisivel ? pedido.amostraEmbalagemObs : null,
+    ...amostraOculta,
   })
 }
 
@@ -106,6 +114,10 @@ export async function criar(req: AuthRequest, res: Response) {
       observacoes: data.observacoes || undefined,
       amostraEmbalagem: data.amostraEmbalagem === 'true' || data.amostraEmbalagem === true,
       amostraEmbalagemObs: data.amostraEmbalagemObs || undefined,
+      amostraNaoSeAplica: data.amostraNaoSeAplica === 'true' || data.amostraNaoSeAplica === true,
+      amostraPedidaCliente: data.amostraPedidaCliente === 'true' || data.amostraPedidaCliente === true,
+      amostraEnviada: data.amostraEnviada === 'true' || data.amostraEnviada === true,
+      amostraChegou: data.amostraChegou === 'true' || data.amostraChegou === true,
       comprovanteSinal: comprovante ? `/uploads/${comprovante.filename}` : undefined,
     },
     include: { cliente: true },
@@ -172,17 +184,29 @@ export async function confirmarChecklist(req: AuthRequest, res: Response) {
 // conferência antes de gerar a O.S.
 export async function revisarFinanceiro(req: AuthRequest, res: Response) {
   const { id } = req.params
-  const { pagamentoConfirmado, comprovanteSinalConferido, financeiroObservacao, liberar } = req.body
+  const {
+    pagamentoConfirmado, comprovanteSinalConferido, financeiroObservacao, liberar,
+    compValor, compData, compBanco, compClienteConfere, compPedidoConfere, aguardandoSinal,
+  } = req.body
+
+  const bool = (v: unknown) => v === true || v === 'true'
 
   const existente = await prisma.pedido.findUnique({ where: { id } })
   if (!existente) return res.status(404).json({ erro: 'Pedido não encontrado' })
 
   const data: Record<string, unknown> = {}
-  if (pagamentoConfirmado !== undefined) data.pagamentoConfirmado = pagamentoConfirmado === true || pagamentoConfirmado === 'true'
-  if (comprovanteSinalConferido !== undefined) data.comprovanteSinalConferido = comprovanteSinalConferido === true || comprovanteSinalConferido === 'true'
+  if (pagamentoConfirmado !== undefined) data.pagamentoConfirmado = bool(pagamentoConfirmado)
+  if (comprovanteSinalConferido !== undefined) data.comprovanteSinalConferido = bool(comprovanteSinalConferido)
   if (financeiroObservacao !== undefined) data.financeiroObservacao = String(financeiroObservacao).trim() || null
+  if (aguardandoSinal !== undefined) data.aguardandoSinal = bool(aguardandoSinal)
+  // Conferência do comprovante de sinal
+  if (compValor !== undefined) data.compValor = compValor === '' || compValor === null ? null : Number(compValor)
+  if (compData !== undefined) data.compData = compData ? new Date(compData) : null
+  if (compBanco !== undefined) data.compBanco = String(compBanco).trim() || null
+  if (compClienteConfere !== undefined) data.compClienteConfere = bool(compClienteConfere)
+  if (compPedidoConfere !== undefined) data.compPedidoConfere = bool(compPedidoConfere)
 
-  const vaiLiberar = (liberar === true || liberar === 'true') && !existente.financeiroLiberadoEm
+  const vaiLiberar = bool(liberar) && !existente.financeiroLiberadoEm
   if (vaiLiberar) {
     data.status = 'FINANCEIRO_APROVADO'
     data.financeiroLiberadoEm = new Date()
@@ -191,18 +215,43 @@ export async function revisarFinanceiro(req: AuthRequest, res: Response) {
   const pedido = await prisma.pedido.update({ where: { id }, data })
 
   if (vaiLiberar) {
-    const pagTxt = pedido.pagamentoConfirmado ? 'SIM' : 'NÃO'
+    const pagTxt = pedido.pagamentoConfirmado ? 'SIM (100%)' : 'NÃO'
     const compTxt = pedido.comprovanteSinalConferido ? 'SIM' : 'NÃO'
+    const sinalTxt = pedido.aguardandoSinal ? ' | AGUARDANDO SINAL' : ''
     const obs = pedido.financeiroObservacao ? ` | Observação: ${pedido.financeiroObservacao}` : ''
     await notificarPorRole(
       ['GERENTE_OPERACIONAL', 'GESTOR_ADMIN', 'ADMIN'],
       `Pedido #${pedido.numero} liberado pelo Financeiro`,
-      `Pagamento confirmado: ${pagTxt} | Comprovante de sinal: ${compTxt}${obs} — Verifique e libere para a produção.`,
+      `Pagamento confirmado: ${pagTxt} | Comprovante de sinal: ${compTxt}${sinalTxt}${obs} — Verifique e libere para a produção.`,
       'NOVO_PEDIDO',
       { pedidoId: pedido.id }
     )
   }
 
+  return res.json(pedido)
+}
+
+// Rastreamento da amostra de embalagem (pedida ao cliente / enviada / chegou).
+// Pode ser atualizado a qualquer momento pelo vendedor do pedido, gerência e produção.
+export async function atualizarAmostra(req: AuthRequest, res: Response) {
+  const { id } = req.params
+  const { amostraEmbalagem, amostraNaoSeAplica, amostraPedidaCliente, amostraEnviada, amostraChegou, amostraEmbalagemObs } = req.body
+  const bool = (v: unknown) => v === true || v === 'true'
+
+  const existente = await prisma.pedido.findUnique({ where: { id } })
+  if (!existente) return res.status(404).json({ erro: 'Pedido não encontrado' })
+
+  const data: Record<string, unknown> = {}
+  if (amostraEmbalagem !== undefined) data.amostraEmbalagem = bool(amostraEmbalagem)
+  if (amostraNaoSeAplica !== undefined) data.amostraNaoSeAplica = bool(amostraNaoSeAplica)
+  if (amostraPedidaCliente !== undefined) data.amostraPedidaCliente = bool(amostraPedidaCliente)
+  if (amostraEnviada !== undefined) data.amostraEnviada = bool(amostraEnviada)
+  if (amostraChegou !== undefined) data.amostraChegou = bool(amostraChegou)
+  if (amostraEmbalagemObs !== undefined) data.amostraEmbalagemObs = String(amostraEmbalagemObs).trim() || null
+
+  if (Object.keys(data).length === 0) return res.status(400).json({ erro: 'Nada para atualizar.' })
+
+  const pedido = await prisma.pedido.update({ where: { id }, data })
   return res.json(pedido)
 }
 

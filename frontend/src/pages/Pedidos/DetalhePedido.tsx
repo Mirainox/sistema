@@ -29,12 +29,29 @@ export default function DetalhePedido() {
   const [fPagamento, setFPagamento] = useState(false)
   const [fComprovante, setFComprovante] = useState(false)
   const [fObs, setFObs] = useState('')
+  const [fAguardandoSinal, setFAguardandoSinal] = useState(false)
+  const [fCompValor, setFCompValor] = useState('')
+  const [fCompData, setFCompData] = useState('')
+  const [fCompBanco, setFCompBanco] = useState('')
+  const [fCompCliente, setFCompCliente] = useState(false)
+  const [fCompPedido, setFCompPedido] = useState(false)
   const [salvandoFin, setSalvandoFin] = useState(false)
   const [erroFin, setErroFin] = useState('')
   const [okFin, setOkFin] = useState('')
 
+  const [aNaoAplica, setANaoAplica] = useState(false)
+  const [aTem, setATem] = useState(false)
+  const [aPedida, setAPedida] = useState(false)
+  const [aEnviada, setAEnviada] = useState(false)
+  const [aChegou, setAChegou] = useState(false)
+  const [aObs, setAObs] = useState('')
+  const [salvandoAmostra, setSalvandoAmostra] = useState(false)
+  const [erroAmostra, setErroAmostra] = useState('')
+  const [okAmostra, setOkAmostra] = useState('')
+
   const podeMexerComprovante = hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL', 'FINANCEIRO')
   const podeRevisarFinanceiro = hasRole('FINANCEIRO', 'ADMIN', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL')
+  const podeMexerAmostra = hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO')
 
   async function salvarComprovante() {
     if (!comprovanteFile) return
@@ -54,12 +71,28 @@ export default function DetalhePedido() {
     }
   }
 
+  function carregarForms(data: Pedido) {
+    setFPagamento(!!data.pagamentoConfirmado)
+    setFComprovante(!!data.comprovanteSinalConferido)
+    setFObs(data.financeiroObservacao || '')
+    setFAguardandoSinal(!!data.aguardandoSinal)
+    setFCompValor(data.compValor != null ? String(data.compValor) : '')
+    setFCompData(data.compData ? data.compData.slice(0, 10) : '')
+    setFCompBanco(data.compBanco || '')
+    setFCompCliente(!!data.compClienteConfere)
+    setFCompPedido(!!data.compPedidoConfere)
+    setANaoAplica(!!data.amostraNaoSeAplica)
+    setATem(!!data.amostraEmbalagem)
+    setAPedida(!!data.amostraPedidaCliente)
+    setAEnviada(!!data.amostraEnviada)
+    setAChegou(!!data.amostraChegou)
+    setAObs(data.amostraEmbalagemObs || '')
+  }
+
   useEffect(() => {
     pedidosApi.buscar(id!).then(({ data }) => {
       setPedido(data)
-      setFPagamento(!!data.pagamentoConfirmado)
-      setFComprovante(!!data.comprovanteSinalConferido)
-      setFObs(data.financeiroObservacao || '')
+      carregarForms(data)
       setLoading(false)
     })
   }, [id])
@@ -74,15 +107,46 @@ export default function DetalhePedido() {
         pagamentoConfirmado: fPagamento,
         comprovanteSinalConferido: fComprovante,
         financeiroObservacao: fObs,
+        aguardandoSinal: fAguardandoSinal,
+        compValor: fCompValor === '' ? null : Number(fCompValor),
+        compData: fCompData || null,
+        compBanco: fCompBanco,
+        compClienteConfere: fCompCliente,
+        compPedidoConfere: fCompPedido,
         liberar,
       })
       const { data } = await pedidosApi.buscar(id!)
       setPedido(data)
+      carregarForms(data)
       setOkFin(liberar ? 'Pedido liberado para a produção. Wellington foi notificado.' : 'Alterações salvas.')
     } catch (err: any) {
       setErroFin(err.response?.data?.erro || 'Erro ao salvar a revisão do financeiro')
     } finally {
       setSalvandoFin(false)
+    }
+  }
+
+  async function salvarAmostra() {
+    setSalvandoAmostra(true)
+    setErroAmostra('')
+    setOkAmostra('')
+    try {
+      await pedidosApi.atualizarAmostra(id!, {
+        amostraNaoSeAplica: aNaoAplica,
+        amostraEmbalagem: !aNaoAplica && aTem,
+        amostraPedidaCliente: !aNaoAplica && aPedida,
+        amostraEnviada: !aNaoAplica && aEnviada,
+        amostraChegou: !aNaoAplica && aChegou,
+        amostraEmbalagemObs: aObs,
+      })
+      const { data } = await pedidosApi.buscar(id!)
+      setPedido(data)
+      carregarForms(data)
+      setOkAmostra('Amostra atualizada.')
+    } catch (err: any) {
+      setErroAmostra(err.response?.data?.erro || 'Erro ao salvar a amostra')
+    } finally {
+      setSalvandoAmostra(false)
     }
   }
 
@@ -141,9 +205,10 @@ export default function DetalhePedido() {
         <h2 className="section-title">Andamento do processo</h2>
         <div className="flex flex-wrap gap-2">
           <Chip ok={pedido.checklistComercial}>Checklist Comercial</Chip>
-          <Chip ok={pedido.pagamentoConfirmado}>Pagamento Confirmado</Chip>
+          <Chip ok={pedido.pagamentoConfirmado}>Pagamento 100% confirmado</Chip>
           <Chip ok={!!pedido.comprovanteSinalConferido}>Comprov. Sinal (Financeiro)</Chip>
           <Chip ok={!!pedido.comprovanteSinal} warn>Comprovante de Sinal (anexo)</Chip>
+          {pedido.aguardandoSinal && <span className="chip chip--warn"><span>⏳</span>Aguardando sinal</span>}
           <Chip ok={!!(pedido.os && pedido.os.length > 0)}>O.S. Gerada</Chip>
         </div>
         {(pedido.financeiroObservacao || pedido.financeiroLiberadoEm) && (
@@ -163,30 +228,76 @@ export default function DetalhePedido() {
         <div className="note note--warn">
           <h2 className="font-semibold mb-1">💰 Revisão do Financeiro</h2>
           <p className="text-sm mb-4 text-amber-700">
-            Nenhum campo é obrigatório e tudo pode ser alterado depois, sem data fixa. Se liberar sem marcar
-            algum item, explique o motivo na observação — o Wellington recebe essas informações para conferir
-            antes de gerar a O.S.
+            Nenhum campo é obrigatório e tudo pode ser alterado depois, sem data fixa. Se liberar sem o sinal
+            confirmado, marque <strong>Aguardando sinal</strong> e explique a situação na observação — o Wellington
+            recebe essas informações para conferir antes de gerar a O.S.
           </p>
 
-          <div className="bg-white rounded-lg border border-amber-200 p-4 space-y-2">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" checked={fPagamento} onChange={(e) => setFPagamento(e.target.checked)} className="w-4 h-4 accent-blue-600" />
-              <span className="font-medium text-gray-800">Pagamento Confirmado</span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" checked={fComprovante} onChange={(e) => setFComprovante(e.target.checked)} className="w-4 h-4 accent-blue-600" />
-              <span className="font-medium text-gray-800">Comprovante de Sinal</span>
-            </label>
-          </div>
+          <div className="bg-white rounded-lg border border-amber-200 p-4 space-y-4">
+            {/* 1. Conferência do comprovante de sinal */}
+            <div>
+              <p className="text-sm font-semibold text-gray-800 mb-2">1. Conferência do comprovante de sinal</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="label">Valor do comprovante</label>
+                  <input type="number" step="0.01" value={fCompValor} onChange={(e) => setFCompValor(e.target.value)} className="input text-sm" placeholder="0,00" />
+                </div>
+                <div>
+                  <label className="label">Data do pagamento</label>
+                  <input type="date" value={fCompData} onChange={(e) => setFCompData(e.target.value)} className="input text-sm" />
+                </div>
+                <div>
+                  <label className="label">Banco / forma</label>
+                  <input value={fCompBanco} onChange={(e) => setFCompBanco(e.target.value)} className="input text-sm" placeholder="Ex.: PIX Itaú" />
+                </div>
+              </div>
+              <div className="mt-2 space-y-1">
+                <label className="flex items-center gap-3 cursor-pointer text-sm">
+                  <input type="checkbox" checked={fCompCliente} onChange={(e) => setFCompCliente(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                  Nome do cliente confere
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer text-sm">
+                  <input type="checkbox" checked={fCompPedido} onChange={(e) => setFCompPedido(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                  Comprovante corresponde a este pedido
+                </label>
+              </div>
+            </div>
 
-          <label className="label mt-4">Observação</label>
-          <textarea
-            value={fObs}
-            onChange={(e) => setFObs(e.target.value)}
-            rows={3}
-            placeholder="Ex.: liberando sem o comprovante porque o cliente enviará o sinal em 2 dias..."
-            className="input text-sm"
-          />
+            <hr className="border-gray-100" />
+
+            {/* 2. Pagamento 100% confirmado */}
+            <div>
+              <p className="text-sm font-semibold text-gray-800 mb-2">2. Pagamento</p>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={fPagamento} onChange={(e) => setFPagamento(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                <span className="font-medium text-gray-800">Pagamento 100% confirmado</span>
+              </label>
+              <p className="text-xs text-gray-500 ml-7">Marque só quando o valor estiver realmente identificado na conta da empresa.</p>
+              <label className="flex items-center gap-3 cursor-pointer mt-2">
+                <input type="checkbox" checked={fComprovante} onChange={(e) => setFComprovante(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                <span className="font-medium text-gray-800">Comprovante de sinal conferido</span>
+              </label>
+            </div>
+
+            <hr className="border-gray-100" />
+
+            {/* 3. Aguardando sinal */}
+            <div>
+              <p className="text-sm font-semibold text-gray-800 mb-2">3. Aguardando sinal</p>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={fAguardandoSinal} onChange={(e) => setFAguardandoSinal(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                <span className="font-medium text-gray-800">Pedido segue sem o sinal confirmado</span>
+              </label>
+              <label className="label mt-2">Observação (situação financeira)</label>
+              <textarea
+                value={fObs}
+                onChange={(e) => setFObs(e.target.value)}
+                rows={3}
+                placeholder="Ex.: cliente informou pagamento em 20/09 · autorizado pela gestão a seguir sem sinal · comprovante enviado, valor ainda não caiu na conta..."
+                className="input text-sm"
+              />
+            </div>
+          </div>
 
           {erroFin && <p className="text-sm text-red-600 mt-2">{erroFin}</p>}
           {okFin && <p className="text-sm text-green-700 mt-2">{okFin}</p>}
@@ -208,8 +319,19 @@ export default function DetalhePedido() {
         <div className="note note--info">
           <h2 className="font-semibold mb-2">🔧 Conferir e gerar Ordem de Serviço</h2>
           <div className="text-sm mb-4 space-y-1 text-blue-700">
-            <p>{pedido.pagamentoConfirmado ? '✅' : '⚠️'} Pagamento confirmado: <strong>{pedido.pagamentoConfirmado ? 'SIM' : 'NÃO'}</strong></p>
-            <p>{pedido.comprovanteSinalConferido ? '✅' : '⚠️'} Comprovante de sinal (Financeiro): <strong>{pedido.comprovanteSinalConferido ? 'SIM' : 'NÃO'}</strong></p>
+            <p>{pedido.pagamentoConfirmado ? '✅' : '⚠️'} Pagamento 100% confirmado: <strong>{pedido.pagamentoConfirmado ? 'SIM' : 'NÃO'}</strong></p>
+            <p>{pedido.comprovanteSinalConferido ? '✅' : '⚠️'} Comprovante de sinal conferido: <strong>{pedido.comprovanteSinalConferido ? 'SIM' : 'NÃO'}</strong></p>
+            {(pedido.compValor != null || pedido.compData || pedido.compBanco) && (
+              <p>
+                🧾 Comprovante:
+                {pedido.compValor != null && <> {formatarMoeda(pedido.compValor)}</>}
+                {pedido.compData && <> · {formatarData(pedido.compData)}</>}
+                {pedido.compBanco && <> · {pedido.compBanco}</>}
+                {pedido.compClienteConfere && <> · cliente confere</>}
+                {pedido.compPedidoConfere && <> · confere com o pedido</>}
+              </p>
+            )}
+            {pedido.aguardandoSinal && <p>⏳ <strong>AGUARDANDO SINAL</strong></p>}
             {pedido.financeiroObservacao && <p>📝 Observação do Financeiro: {pedido.financeiroObservacao}</p>}
             <p className="text-xs">Confira os documentos e fotos antes de gerar a O.S.</p>
           </div>
@@ -277,14 +399,47 @@ export default function DetalhePedido() {
 
           {pedido.amostraEmbalagem != null && (
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-1">
-                {pedido.amostraEmbalagem ? '✅' : '⬜'} Amostra Embalagem
-              </p>
+              <p className="text-sm font-medium text-gray-700 mb-2">Amostra de embalagem</p>
+              {pedido.amostraNaoSeAplica ? (
+                <p className="text-sm text-gray-500">Não se aplica (equipamento não depende de embalagem).</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <Chip ok={!!pedido.amostraEmbalagem}>Há amostra</Chip>
+                  <Chip ok={!!pedido.amostraPedidaCliente}>Pedida ao cliente</Chip>
+                  <Chip ok={!!pedido.amostraEnviada}>Enviada</Chip>
+                  <Chip ok={!!pedido.amostraChegou}>Chegou na Mirainox</Chip>
+                </div>
+              )}
               {pedido.amostraEmbalagemObs && (
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{pedido.amostraEmbalagemObs}</p>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap mt-2">{pedido.amostraEmbalagemObs}</p>
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ---------- Editar amostra de embalagem ---------- */}
+      {podeMexerAmostra && pedido.amostraEmbalagem != null && (
+        <div className="card">
+          <h2 className="section-title">📦 Atualizar amostra de embalagem</h2>
+          <label className="flex items-center gap-3 mb-3 cursor-pointer">
+            <input type="checkbox" checked={aNaoAplica} onChange={(e) => setANaoAplica(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+            <span className="font-medium">Não se aplica (equipamento não depende de embalagem)</span>
+          </label>
+          {!aNaoAplica && (
+            <div className="space-y-2 border-l-2 border-gray-100 pl-4">
+              <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={aTem} onChange={(e) => setATem(e.target.checked)} className="w-4 h-4 accent-blue-600" />Há amostra de embalagem</label>
+              <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={aPedida} onChange={(e) => setAPedida(e.target.checked)} className="w-4 h-4 accent-blue-600" />Amostra já pedida ao cliente</label>
+              <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={aEnviada} onChange={(e) => setAEnviada(e.target.checked)} className="w-4 h-4 accent-blue-600" />Amostra já enviada</label>
+              <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={aChegou} onChange={(e) => setAChegou(e.target.checked)} className="w-4 h-4 accent-blue-600" />Amostra já chegou na Mirainox</label>
+            </div>
+          )}
+          <textarea value={aObs} onChange={(e) => setAObs(e.target.value)} rows={2} placeholder="Observação sobre a amostra..." className="input text-sm mt-3" />
+          {erroAmostra && <p className="text-sm text-red-600 mt-2">{erroAmostra}</p>}
+          {okAmostra && <p className="text-sm text-green-700 mt-2">{okAmostra}</p>}
+          <button onClick={salvarAmostra} disabled={salvandoAmostra} className="btn-primary mt-3">
+            {salvandoAmostra ? 'Salvando...' : 'Salvar amostra'}
+          </button>
         </div>
       )}
 

@@ -59,12 +59,22 @@ export interface Pedido {
   checklistComercial: boolean
   pagamentoConfirmado: boolean
   comprovanteSinalConferido?: boolean
+  compValor?: number | null
+  compData?: string | null
+  compBanco?: string | null
+  compClienteConfere?: boolean
+  compPedidoConfere?: boolean
+  aguardandoSinal?: boolean
   financeiroObservacao?: string | null
   financeiroLiberadoEm?: string | null
   observacoesTecnicas?: string
   observacoes?: string | null
   amostraEmbalagem?: boolean | null
   amostraEmbalagemObs?: string | null
+  amostraNaoSeAplica?: boolean | null
+  amostraPedidaCliente?: boolean | null
+  amostraEnviada?: boolean | null
+  amostraChegou?: boolean | null
   comprovanteSinal?: string | null
   createdAt: string
   os?: OS[]

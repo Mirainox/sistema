@@ -25,8 +25,9 @@ export default function PainelFinanceiro() {
     return (
       <div className={`flex items-center justify-between p-4 border rounded-xl ${cor}`}>
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-semibold text-blue-600">#{p.numero}</span>
+            {p.aguardandoSinal && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">⏳ Aguardando sinal</span>}
             {p.financeiroLiberadoEm && <span className="text-xs text-blue-600">liberado em {formatarData(p.financeiroLiberadoEm)}</span>}
           </div>
           <p className="text-sm"><strong>{p.cliente.nome}</strong> - {p.cliente.cidade}/{p.cliente.estado}</p>
@@ -37,8 +38,8 @@ export default function PainelFinanceiro() {
             {' | '}<span className="text-gray-500">Prazo: </span>{formatarData(p.prazoEntrega)}
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            {p.pagamentoConfirmado ? '✅' : '⬜'} Pagamento confirmado &nbsp;·&nbsp;
-            {p.comprovanteSinalConferido ? '✅' : '⬜'} Comprovante de sinal
+            {p.pagamentoConfirmado ? '✅' : '⬜'} Pagamento 100% confirmado &nbsp;·&nbsp;
+            {p.comprovanteSinalConferido ? '✅' : '⬜'} Comprovante de sinal conferido
             {p.financeiroObservacao ? ` · 📝 ${p.financeiroObservacao}` : ''}
           </p>
         </div>

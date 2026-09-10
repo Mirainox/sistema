@@ -186,11 +186,21 @@ model Pedido {
   observacoes          String?
   amostraEmbalagem     Boolean      @default(false)
   amostraEmbalagemObs  String?
+  amostraNaoSeAplica   Boolean      @default(false)
+  amostraPedidaCliente Boolean      @default(false)
+  amostraEnviada       Boolean      @default(false)
+  amostraChegou        Boolean      @default(false)
   contratoAssinado     Boolean      @default(false)
   comprovanteSinal     String?
   checklistComercial   Boolean      @default(false)
   pagamentoConfirmado  Boolean      @default(false)
   comprovanteSinalConferido Boolean  @default(false)
+  compValor            Float?
+  compData             DateTime?
+  compBanco            String?
+  compClienteConfere   Boolean      @default(false)
+  compPedidoConfere    Boolean      @default(false)
+  aguardandoSinal      Boolean      @default(false)
   financeiroObservacao String?
   financeiroLiberadoEm DateTime?
   createdAt            DateTime     @default(now())
