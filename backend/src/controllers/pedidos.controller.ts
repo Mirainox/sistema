@@ -439,7 +439,7 @@ export async function anexarDesenho(req: AuthRequest, res: Response) {
       numeroPedido: pedido.numero,
       nomeCliente: pedido.cliente.nome,
       cidadeCliente: pedido.cliente.cidade,
-      visivelPara: ['PROJETISTA', 'GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'PRODUCAO'],
+      visivelPara: ['PROJETISTA', 'GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'PRODUCAO', 'ALMOXARIFE'],
     },
     include: { usuario: { select: { nome: true } } },
   })
