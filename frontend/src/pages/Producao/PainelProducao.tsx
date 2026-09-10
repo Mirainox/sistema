@@ -59,7 +59,7 @@ export default function PainelProducao() {
       {precisaFoto && (
         <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4">
           <h2 className="font-semibold text-amber-800 text-lg">📸 Foto de Produção Pendente</h2>
-          <p className="text-amber-700 text-sm mt-1">Hoje é dia de registrar foto do andamento da produção (17h). Clique em "Enviar Foto" nas O.S. abaixo.</p>
+          <p className="text-amber-700 text-sm mt-1">Hoje é dia de registrar foto do andamento da produção (17h). Clique em "Enviar Foto" nas Ordens de Pedido abaixo.</p>
         </div>
       )}
 
@@ -84,11 +84,11 @@ export default function PainelProducao() {
       </div>
 
       <div className="card">
-        <h2 className="font-semibold mb-4">O.S. em Andamento</h2>
+        <h2 className="font-semibold mb-4">Ordens de Pedido em Andamento</h2>
         {loading ? <div className="text-center py-8 text-gray-500">Carregando...</div> : (
           <div className="space-y-3">
             {osList.length === 0 ? (
-              <p className="text-center py-8 text-gray-500">Nenhuma O.S. em andamento</p>
+              <p className="text-center py-8 text-gray-500">Nenhuma Ordem de Pedido em andamento</p>
             ) : (
               osList.map((os) => (
                 <div key={os.id} className="border border-gray-100 rounded-xl p-4">
@@ -107,7 +107,7 @@ export default function PainelProducao() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <button className="btn-primary text-xs" onClick={() => setFotoModal(os)}>📸 Enviar Foto</button>
-                      <Link to={`/os/${os.id}`} className="btn-secondary text-xs text-center">Ver O.S.</Link>
+                      <Link to={`/os/${os.id}`} className="btn-secondary text-xs text-center">Ver Ordem de Pedido</Link>
                     </div>
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export default function PainelProducao() {
           <div className="bg-white rounded-xl p-6 w-96 space-y-4">
             <h2 className="font-semibold text-lg">📸 Enviar Foto de Produção</h2>
             <p className="text-sm text-gray-600">
-              O.S. #{fotoModal.numero} - {fotoModal.pedido.cliente.nome} / {fotoModal.pedido.cliente.cidade}
+              Ordem de Pedido #{fotoModal.numero} - {fotoModal.pedido.cliente.nome} / {fotoModal.pedido.cliente.cidade}
             </p>
             <div>
               <label className="label">Foto *</label>

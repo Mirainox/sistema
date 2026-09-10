@@ -46,7 +46,7 @@ export default function DetalheOS() {
   }
 
   if (loading) return <div className="text-center py-8 text-gray-500">Carregando...</div>
-  if (!os) return <div className="text-center py-8 text-red-500">O.S. não encontrada</div>
+  if (!os) return <div className="text-center py-8 text-red-500">Ordem de Pedido não encontrada</div>
 
   const podeDistribuir = hasRole('GERENTE_OPERACIONAL', 'ADMIN')
   const podeAtualizarStatus = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'PRODUCAO', 'ALMOXARIFE')
@@ -54,7 +54,7 @@ export default function DetalheOS() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <PageHeader
-        title={`O.S. #${os.numero}`}
+        title={`Ordem de Pedido #${os.numero}`}
         subtitle={`Pedido #${os.pedido.numero} · Criada em ${formatarData(os.createdAt)}`}
         back="/os"
         actions={
@@ -100,12 +100,12 @@ export default function DetalheOS() {
 
       {podeDistribuir && os.status === 'GERADA' && (
         <div className="card">
-          <h2 className="font-semibold mb-4">📋 Distribuir O.S. para Setores</h2>
+          <h2 className="font-semibold mb-4">📋 Distribuir Ordem de Pedido para Setores</h2>
           {!distribuindo ? (
             <button className="btn-primary" onClick={() => setDistribuindo(true)}>Iniciar Distribuição</button>
           ) : (
             <div className="space-y-4">
-              <p className="text-sm text-gray-600">Selecione os setores que receberão esta O.S. e indique se já receberam fisicamente:</p>
+              <p className="text-sm text-gray-600">Selecione os setores que receberão esta Ordem de Pedido e indique se já receberam fisicamente:</p>
               {SETORES_PRODUCAO.map((s) => {
                 const idx = setoresSelecionados.findIndex((x) => x.setor === s.setor)
                 const selecionado = idx >= 0
@@ -150,7 +150,7 @@ export default function DetalheOS() {
 
       {podeAtualizarStatus && os.status !== 'GERADA' && os.status !== 'CONCLUIDA' && os.status !== 'EXPEDIDA' && (
         <div className="card">
-          <h2 className="font-semibold mb-3">Atualizar Status da O.S.</h2>
+          <h2 className="font-semibold mb-3">Atualizar Status da Ordem de Pedido</h2>
           <div className="flex flex-wrap gap-2">
             {['EM_ANDAMENTO', 'AGUARDANDO_PECAS', 'EM_TESTE', 'CONCLUIDA'].map((s) => (
               <button key={s} className="btn-secondary text-sm" onClick={() => atualizarStatus(s)}>

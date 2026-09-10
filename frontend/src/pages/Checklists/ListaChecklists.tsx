@@ -6,7 +6,7 @@ import PageHeader from '../../components/PageHeader'
 
 const TIPO_LABEL: Record<string, string> = {
   COMERCIAL_VENDEDOR: 'Checklist Comercial',
-  DISTRIBUICAO_OS: 'Distribuição O.S.',
+  DISTRIBUICAO_OS: 'Distribuição Ordem de Pedido',
   FOTO_PRODUCAO: 'Foto Produção',
   ORGANIZACAO_SEXTA: 'Organização Sexta',
   TORNO_SEXTA: 'Tornos Sexta',
