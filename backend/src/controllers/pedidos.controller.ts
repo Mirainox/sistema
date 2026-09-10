@@ -95,11 +95,19 @@ export async function criar(req: AuthRequest, res: Response) {
     })
   }
 
+  // Vendedor responsável pelo pedido: por padrão quem está logado, mas pode ser
+  // indicado outro vendedor (a empresa tem mais de um).
+  let vendedorId = req.usuario!.id
+  if (data.vendedorId && data.vendedorId !== req.usuario!.id) {
+    const v = await prisma.usuario.findFirst({ where: { id: String(data.vendedorId), ativo: true }, select: { id: true } })
+    if (v) vendedorId = v.id
+  }
+
   const pedido = await prisma.pedido.create({
     data: {
       numero,
       clienteId: cliente.id,
-      vendedorId: req.usuario!.id,
+      vendedorId,
       empresa: data.empresa || undefined,
       equipamento: data.equipamento || 'A definir',
       modelo: data.modelo || '-',

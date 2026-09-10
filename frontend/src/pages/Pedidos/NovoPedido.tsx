@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { pedidosApi } from '../../api'
+import { pedidosApi, usuariosApi } from '../../api'
+import { useAuth } from '../../contexts/AuthContext'
 import AnexoDocumentoInput from '../../components/AnexoDocumentoInput'
 import PageHeader from '../../components/PageHeader'
 
@@ -29,6 +30,21 @@ function DocItem({
 
 export default function NovoPedido() {
   const navigate = useNavigate()
+  const { usuario } = useAuth()
+
+  const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([])
+  const [vendedorId, setVendedorId] = useState(usuario?.role === 'VENDEDOR' ? usuario.id : '')
+
+  useEffect(() => {
+    usuariosApi.listar().then(({ data }) => {
+      const lista = data.filter((u: any) => u.ativo && u.role === 'VENDEDOR').map((u: any) => ({ id: u.id, nome: u.nome }))
+      // garante que o usuário logado (se vendedor) apareça na lista
+      if (usuario?.role === 'VENDEDOR' && !lista.some((v: any) => v.id === usuario.id)) {
+        lista.unshift({ id: usuario.id, nome: usuario.nome })
+      }
+      setVendedores(lista)
+    }).catch(() => {})
+  }, [usuario])
 
   const [pedidoGerado, setPedidoGerado] = useState<File | null>(null)
   const [pedidoGeradoProducao, setPedidoGeradoProducao] = useState<File | null>(null)
@@ -49,11 +65,15 @@ export default function NovoPedido() {
 
   // Comprovante de Sinal NÃO é obrigatório para lançar o pedido — pode ser
   // anexado depois, sem limite de tempo (na tela de detalhe do pedido).
-  const tudoPronto = !!pedidoGerado && !!pedidoGeradoProducao && !!pedidoAssinado
+  const tudoPronto = !!pedidoGerado && !!pedidoGeradoProducao && !!pedidoAssinado && !!vendedorId
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!tudoPronto) {
+    if (!vendedorId) {
+      setErro('Selecione o vendedor responsável pelo pedido.')
+      return
+    }
+    if (!pedidoGerado || !pedidoGeradoProducao || !pedidoAssinado) {
       setErro('Anexe o Pedido Gerado, o Pedido Gerado Produção e o Pedido Assinado.')
       return
     }
@@ -61,6 +81,7 @@ export default function NovoPedido() {
     setErro('')
     try {
       const formData = new FormData()
+      formData.append('vendedorId', vendedorId)
       formData.append('pedidoGerado', pedidoGerado!)
       formData.append('pedidoGeradoProducao', pedidoGeradoProducao!)
       formData.append('pedidoAssinado', pedidoAssinado!)
@@ -88,6 +109,17 @@ export default function NovoPedido() {
       <PageHeader title="Novo Pedido" back="/pedidos" />
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="card">
+          <h2 className="section-title">Vendedor responsável</h2>
+          <p className="text-xs text-gray-500 mb-2">Identifica quem fechou esta venda. Acompanha o pedido em todas as etapas.</p>
+          <select className="input" value={vendedorId} onChange={(e) => setVendedorId(e.target.value)} required>
+            <option value="">Selecione o vendedor...</option>
+            {vendedores.map((v) => (
+              <option key={v.id} value={v.id}>{v.nome}{usuario?.id === v.id ? ' (você)' : ''}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="card divide-y divide-gray-100">
           <h2 className="section-title">Documentos obrigatórios</h2>
           <div className="pt-4">
@@ -182,7 +214,7 @@ export default function NovoPedido() {
         {erro && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{erro}</div>}
 
         {!tudoPronto && (
-          <p className="text-sm text-amber-600">⚠️ Anexe os 3 documentos obrigatórios para liberar o envio.</p>
+          <p className="text-sm text-amber-600">⚠️ Selecione o vendedor responsável e anexe os 3 documentos obrigatórios para liberar o envio.</p>
         )}
 
         <div className="flex gap-3">

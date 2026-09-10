@@ -64,6 +64,7 @@ export default function ListaPedidos() {
                   <th className="pb-3 font-semibold text-gray-700">Nº Pedido</th>
                   <th className="pb-3 font-semibold text-gray-700">Cliente</th>
                   <th className="pb-3 font-semibold text-gray-700">Cidade</th>
+                  <th className="pb-3 font-semibold text-gray-700">Vendedor</th>
                   <th className="pb-3 font-semibold text-gray-700">Equipamento</th>
                   <th className="pb-3 font-semibold text-gray-700">Prazo</th>
                   <th className="pb-3 font-semibold text-gray-700">Valor</th>
@@ -73,13 +74,14 @@ export default function ListaPedidos() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {pedidos.length === 0 ? (
-                  <tr><td colSpan={8} className="py-8 text-center text-gray-500">Nenhum pedido encontrado</td></tr>
+                  <tr><td colSpan={9} className="py-8 text-center text-gray-500">Nenhum pedido encontrado</td></tr>
                 ) : (
                   pedidos.map((p) => (
                     <tr key={p.id} className="hover:bg-gray-50">
                       <td className="py-3 font-medium text-blue-600">#{p.numero}</td>
                       <td className="py-3">{p.cliente.nome}</td>
                       <td className="py-3 text-gray-600">{p.cliente.cidade}/{p.cliente.estado}</td>
+                      <td className="py-3 text-gray-600">{p.vendedor?.nome || '—'}</td>
                       <td className="py-3">{p.equipamento} {p.modelo}</td>
                       <td className="py-3 text-gray-600">{formatarData(p.prazoEntrega)}</td>
                       <td className="py-3">{formatarMoeda(p.valorTotal)}</td>

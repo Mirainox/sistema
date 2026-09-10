@@ -238,7 +238,7 @@ export default function DetalhePedido() {
     <div className="max-w-4xl mx-auto space-y-6">
       <PageHeader
         title={`Pedido #${pedido.numero}`}
-        subtitle={`Criado em ${formatarData(pedido.createdAt)}`}
+        subtitle={`Criado em ${formatarData(pedido.createdAt)}${pedido.vendedor?.nome ? ` · Vendedor: ${pedido.vendedor.nome}` : ''}`}
         back="/pedidos"
         actions={
           <span className={`text-sm px-3 py-1 rounded-full font-medium ${STATUS_PEDIDO_COR[pedido.status]}`}>
@@ -274,6 +274,7 @@ export default function DetalhePedido() {
               <dt>Cidade</dt><dd>{pedido.cliente.cidade}/{pedido.cliente.estado}</dd>
               {pedido.cliente.telefone && (<><dt>Telefone</dt><dd>{pedido.cliente.telefone}</dd></>)}
               {pedido.cliente.email && (<><dt>Email</dt><dd>{pedido.cliente.email}</dd></>)}
+              {pedido.vendedor?.nome && (<><dt>Vendedor</dt><dd>{pedido.vendedor.nome}</dd></>)}
             </dl>
           </div>
           <div>
