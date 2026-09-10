@@ -160,7 +160,6 @@ export default function DetalhePedido() {
   if (!pedido) return <div className="text-center py-8 text-red-500">Pedido não encontrado</div>
 
   const temDocumentos = (pedido.fotos && pedido.fotos.length > 0) || pedido.comprovanteSinal
-  const temObservacoes = pedido.observacoesTecnicas || pedido.observacoes || pedido.amostraEmbalagem != null
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -211,6 +210,21 @@ export default function DetalhePedido() {
           {pedido.aguardandoSinal && <span className="chip chip--warn"><span>⏳</span>Aguardando sinal</span>}
           <Chip ok={!!(pedido.os && pedido.os.length > 0)}>O.S. Gerada</Chip>
         </div>
+        {(pedido.observacoes || pedido.observacoesComerciais || pedido.observacoesTecnicas) && (
+          <div className="mt-4 border-t border-gray-100 pt-3 space-y-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Observações do pedido</p>
+            {pedido.observacoes && (
+              <p className="text-sm text-gray-700 whitespace-pre-wrap"><span className="text-gray-500">Geral (vendedor): </span>{pedido.observacoes}</p>
+            )}
+            {pedido.observacoesComerciais && (
+              <p className="text-sm text-gray-700 whitespace-pre-wrap"><span className="text-gray-500">Comercial: </span>{pedido.observacoesComerciais}</p>
+            )}
+            {pedido.observacoesTecnicas && (
+              <p className="text-sm text-gray-700 whitespace-pre-wrap"><span className="text-gray-500">Técnica: </span>{pedido.observacoesTecnicas}</p>
+            )}
+            <p className="text-xs text-gray-400">Acompanham o pedido em todas as etapas (financeiro, produção e setores).</p>
+          </div>
+        )}
         {(pedido.financeiroObservacao || pedido.financeiroLiberadoEm) && (
           <div className="mt-3 text-xs text-gray-600 space-y-1">
             {pedido.financeiroObservacao && (
@@ -227,11 +241,17 @@ export default function DetalhePedido() {
       {podeRevisarFinanceiro && (pedido.status === 'AGUARDANDO_FINANCEIRO' || pedido.status === 'FINANCEIRO_APROVADO') && (
         <div className="note note--warn">
           <h2 className="font-semibold mb-1">💰 Revisão do Financeiro</h2>
-          <p className="text-sm mb-4 text-amber-700">
+          <p className="text-sm mb-3 text-amber-700">
             Nenhum campo é obrigatório e tudo pode ser alterado depois, sem data fixa. Se liberar sem o sinal
             confirmado, marque <strong>Aguardando sinal</strong> e explique a situação na observação — o Wellington
-            recebe essas informações para conferir antes de gerar a O.S.
+            recebe essas informações para conferir antes de liberar para a produção.
           </p>
+          {(pedido.observacoes || pedido.observacoesComerciais) && (
+            <div className="text-sm text-amber-800 bg-white/60 rounded-lg p-3 mb-4 space-y-1">
+              {pedido.observacoes && <p>📝 <span className="text-amber-700">Observação do vendedor:</span> {pedido.observacoes}</p>}
+              {pedido.observacoesComerciais && <p>📝 <span className="text-amber-700">Observação comercial:</span> {pedido.observacoesComerciais}</p>}
+            </div>
+          )}
 
           <div className="bg-white rounded-lg border border-amber-200 p-4 space-y-4">
             {/* 1. Conferência do comprovante de sinal */}
@@ -317,7 +337,7 @@ export default function DetalhePedido() {
 
       {hasRole('GERENTE_OPERACIONAL', 'ADMIN') && pedido.status === 'FINANCEIRO_APROVADO' && (!pedido.os || pedido.os.length === 0) && (
         <div className="note note--info">
-          <h2 className="font-semibold mb-2">🔧 Conferir e gerar Ordem de Serviço</h2>
+          <h2 className="font-semibold mb-2">🏭 Conferir e liberar para a Produção</h2>
           <div className="text-sm mb-4 space-y-1 text-blue-700">
             <p>{pedido.pagamentoConfirmado ? '✅' : '⚠️'} Pagamento 100% confirmado: <strong>{pedido.pagamentoConfirmado ? 'SIM' : 'NÃO'}</strong></p>
             <p>{pedido.comprovanteSinalConferido ? '✅' : '⚠️'} Comprovante de sinal conferido: <strong>{pedido.comprovanteSinalConferido ? 'SIM' : 'NÃO'}</strong></p>
@@ -333,9 +353,10 @@ export default function DetalhePedido() {
             )}
             {pedido.aguardandoSinal && <p>⏳ <strong>AGUARDANDO SINAL</strong></p>}
             {pedido.financeiroObservacao && <p>📝 Observação do Financeiro: {pedido.financeiroObservacao}</p>}
-            <p className="text-xs">Confira os documentos e fotos antes de gerar a O.S.</p>
+            {pedido.observacoes && <p>📝 Observação do vendedor: {pedido.observacoes}</p>}
+            <p className="text-xs">Confira as observações, os documentos e as fotos antes de liberar.</p>
           </div>
-          <button onClick={gerarOS} className="btn-primary">🔧 Gerar O.S.</button>
+          <button onClick={gerarOS} className="btn-primary">🏭 Liberar para produção</button>
         </div>
       )}
 
@@ -378,42 +399,22 @@ export default function DetalhePedido() {
         </div>
       )}
 
-      {/* ---------- Observações ---------- */}
-      {temObservacoes && (
-        <div className="card space-y-4">
-          <h2 className="section-title">Observações</h2>
-
-          {pedido.observacoesTecnicas && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-1">Observações técnicas</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{pedido.observacoesTecnicas}</p>
+      {/* ---------- Amostra de embalagem ---------- */}
+      {pedido.amostraEmbalagem != null && (
+        <div className="card">
+          <h2 className="section-title">📦 Amostra de embalagem</h2>
+          {pedido.amostraNaoSeAplica ? (
+            <p className="text-sm text-gray-500">Não se aplica (equipamento não depende de embalagem).</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Chip ok={!!pedido.amostraEmbalagem}>Há amostra</Chip>
+              <Chip ok={!!pedido.amostraPedidaCliente}>Pedida ao cliente</Chip>
+              <Chip ok={!!pedido.amostraEnviada}>Enviada</Chip>
+              <Chip ok={!!pedido.amostraChegou}>Chegou na Mirainox</Chip>
             </div>
           )}
-
-          {pedido.observacoes && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-1">Observações do vendedor</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{pedido.observacoes}</p>
-            </div>
-          )}
-
-          {pedido.amostraEmbalagem != null && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Amostra de embalagem</p>
-              {pedido.amostraNaoSeAplica ? (
-                <p className="text-sm text-gray-500">Não se aplica (equipamento não depende de embalagem).</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  <Chip ok={!!pedido.amostraEmbalagem}>Há amostra</Chip>
-                  <Chip ok={!!pedido.amostraPedidaCliente}>Pedida ao cliente</Chip>
-                  <Chip ok={!!pedido.amostraEnviada}>Enviada</Chip>
-                  <Chip ok={!!pedido.amostraChegou}>Chegou na Mirainox</Chip>
-                </div>
-              )}
-              {pedido.amostraEmbalagemObs && (
-                <p className="text-sm text-gray-700 whitespace-pre-wrap mt-2">{pedido.amostraEmbalagemObs}</p>
-              )}
-            </div>
+          {pedido.amostraEmbalagemObs && (
+            <p className="text-sm text-gray-700 whitespace-pre-wrap mt-2">{pedido.amostraEmbalagemObs}</p>
           )}
         </div>
       )}

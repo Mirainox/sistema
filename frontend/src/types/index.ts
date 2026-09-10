@@ -68,6 +68,7 @@ export interface Pedido {
   financeiroObservacao?: string | null
   financeiroLiberadoEm?: string | null
   observacoesTecnicas?: string
+  observacoesComerciais?: string | null
   observacoes?: string | null
   amostraEmbalagem?: boolean | null
   amostraEmbalagemObs?: string | null
