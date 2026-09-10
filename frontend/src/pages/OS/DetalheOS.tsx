@@ -9,6 +9,7 @@ import PageHeader from '../../components/PageHeader'
 // Setores que o gerente de produção pode acionar nesta etapa inicial.
 // A Usinagem NÃO entra aqui — é acionada depois, conforme necessidade.
 const SETORES_PRODUCAO: { setor: Setor; label: string }[] = [
+  { setor: 'PROJETOS', label: 'Projetos e Desenhos' },
   { setor: 'ALMOXARIFADO_GERAL', label: 'Almoxarifado 1' },
   { setor: 'ALMOXARIFADO_CONSUMIVEIS', label: 'Almoxarifado 2' },
   { setor: 'PRODUCAO_INOX', label: 'Produção de Inox' },
