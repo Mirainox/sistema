@@ -50,6 +50,7 @@ export interface Pedido {
   numero: string
   cliente: Cliente
   vendedor: { nome: string }
+  empresa?: string | null
   equipamento: string
   modelo: string
   condicaoPagamento: string

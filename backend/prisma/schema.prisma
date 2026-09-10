@@ -182,6 +182,7 @@ model Pedido {
   cliente              Cliente      @relation(fields: [clienteId], references: [id])
   vendedorId           String
   vendedor             Usuario      @relation("Vendedor", fields: [vendedorId], references: [id])
+  empresa              String?
   equipamento          String
   modelo               String
   opcionais            String?

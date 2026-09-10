@@ -100,6 +100,7 @@ export async function criar(req: AuthRequest, res: Response) {
       numero,
       clienteId: cliente.id,
       vendedorId: req.usuario!.id,
+      empresa: data.empresa || undefined,
       equipamento: data.equipamento || 'A definir',
       modelo: data.modelo || '-',
       opcionais: data.opcionais,
@@ -212,17 +213,18 @@ export async function revisarFinanceiro(req: AuthRequest, res: Response) {
     data.financeiroLiberadoEm = new Date()
   }
 
-  const pedido = await prisma.pedido.update({ where: { id }, data })
+  const pedido = await prisma.pedido.update({ where: { id }, data, include: { cliente: true } })
 
   if (vaiLiberar) {
     const pagTxt = pedido.pagamentoConfirmado ? 'SIM (100%)' : 'NÃO'
     const compTxt = pedido.comprovanteSinalConferido ? 'SIM' : 'NÃO'
     const sinalTxt = pedido.aguardandoSinal ? ' | AGUARDANDO SINAL' : ''
-    const obs = pedido.financeiroObservacao ? ` | Observação: ${pedido.financeiroObservacao}` : ''
+    const obs = pedido.financeiroObservacao ? ` | Obs. financeiro: ${pedido.financeiroObservacao}` : ''
+    const empresa = pedido.empresa ? ` (${pedido.empresa})` : ''
     await notificarPorRole(
       ['GERENTE_OPERACIONAL', 'GESTOR_ADMIN', 'ADMIN'],
-      `Pedido #${pedido.numero} liberado pelo Financeiro`,
-      `Pagamento confirmado: ${pagTxt} | Comprovante de sinal: ${compTxt}${sinalTxt}${obs} — Verifique e libere para a produção.`,
+      `Pedido #${pedido.numero} liberado pelo Financeiro — conferência inicial`,
+      `${pedido.cliente.nome}${empresa} - ${pedido.cliente.cidade} | ${pedido.equipamento} ${pedido.modelo} | Prazo: ${pedido.prazoEntrega.toLocaleDateString('pt-BR')} | Pagamento 100%: ${pagTxt} | Comprovante conferido: ${compTxt}${sinalTxt}${obs}`,
       'NOVO_PEDIDO',
       { pedidoId: pedido.id }
     )

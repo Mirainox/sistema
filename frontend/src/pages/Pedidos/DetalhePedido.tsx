@@ -181,6 +181,7 @@ export default function DetalhePedido() {
             <h2 className="section-title">Cliente</h2>
             <dl className="dl">
               <dt>Nome</dt><dd>{pedido.cliente.nome}</dd>
+              {pedido.empresa && (<><dt>Empresa / ref.</dt><dd>{pedido.empresa}</dd></>)}
               <dt>Cidade</dt><dd>{pedido.cliente.cidade}/{pedido.cliente.estado}</dd>
               {pedido.cliente.telefone && (<><dt>Telefone</dt><dd>{pedido.cliente.telefone}</dd></>)}
               {pedido.cliente.email && (<><dt>Email</dt><dd>{pedido.cliente.email}</dd></>)}
@@ -341,26 +342,66 @@ export default function DetalhePedido() {
 
       {hasRole('GERENTE_OPERACIONAL', 'ADMIN') && pedido.status === 'FINANCEIRO_APROVADO' && (!pedido.os || pedido.os.length === 0) && (
         <div className="note note--info">
-          <h2 className="font-semibold mb-2">🏭 Conferir e gerar Ordem de Pedido</h2>
-          <div className="text-sm mb-4 space-y-1 text-blue-700">
-            <p>{pedido.pagamentoConfirmado ? '✅' : '⚠️'} Pagamento 100% confirmado: <strong>{pedido.pagamentoConfirmado ? 'SIM' : 'NÃO'}</strong></p>
-            <p>{pedido.comprovanteSinalConferido ? '✅' : '⚠️'} Comprovante de sinal conferido: <strong>{pedido.comprovanteSinalConferido ? 'SIM' : 'NÃO'}</strong></p>
-            {(pedido.compValor != null || pedido.compData || pedido.compBanco) && (
+          <h2 className="font-semibold mb-1">🏭 Conferência inicial do pedido (Gerente de Produção)</h2>
+          <p className="text-sm text-blue-700 mb-4">Wellington — confira os dados abaixo antes de gerar a Ordem de Pedido para a produção.</p>
+
+          <div className="bg-white rounded-lg border border-blue-200 p-4 text-sm text-gray-700 space-y-3">
+            <div>
+              <p className="font-semibold text-gray-800 mb-1">Identificação</p>
+              <dl className="dl">
+                <dt>Nº do pedido</dt><dd>#{pedido.numero}</dd>
+                <dt>Cliente</dt><dd>{pedido.cliente.nome}</dd>
+                <dt>Empresa / ref.</dt><dd>{pedido.empresa || '—'}</dd>
+                <dt>Cidade</dt><dd>{pedido.cliente.cidade}/{pedido.cliente.estado}</dd>
+                <dt>Equipamento</dt><dd>{pedido.equipamento}</dd>
+                <dt>Modelo</dt><dd>{pedido.modelo}</dd>
+                <dt>Prazo de entrega</dt><dd>{formatarData(pedido.prazoEntrega)}</dd>
+              </dl>
+            </div>
+
+            <div className="border-t border-gray-100 pt-3">
+              <p className="font-semibold text-gray-800 mb-1">Observações</p>
+              <p><span className="text-gray-500">Comerciais: </span>{pedido.observacoesComerciais || '—'}</p>
+              <p><span className="text-gray-500">Técnicas: </span>{pedido.observacoesTecnicas || '—'}</p>
+              {pedido.observacoes && <p><span className="text-gray-500">Gerais: </span>{pedido.observacoes}</p>}
+            </div>
+
+            <div className="border-t border-gray-100 pt-3">
+              <p className="font-semibold text-gray-800 mb-1">Financeiro</p>
+              <p>{pedido.pagamentoConfirmado ? '✅' : '⚠️'} Pagamento 100% confirmado: <strong>{pedido.pagamentoConfirmado ? 'SIM' : 'NÃO'}</strong></p>
+              <p>{pedido.comprovanteSinalConferido ? '✅' : '⚠️'} Comprovante de sinal conferido: <strong>{pedido.comprovanteSinalConferido ? 'SIM' : 'NÃO'}</strong></p>
+              {(pedido.compValor != null || pedido.compData || pedido.compBanco) && (
+                <p>
+                  <span className="text-gray-500">Comprovante: </span>
+                  {pedido.compValor != null && <>{formatarMoeda(pedido.compValor)}</>}
+                  {pedido.compData && <> · {formatarData(pedido.compData)}</>}
+                  {pedido.compBanco && <> · {pedido.compBanco}</>}
+                </p>
+              )}
               <p>
-                🧾 Comprovante:
-                {pedido.compValor != null && <> {formatarMoeda(pedido.compValor)}</>}
-                {pedido.compData && <> · {formatarData(pedido.compData)}</>}
-                {pedido.compBanco && <> · {pedido.compBanco}</>}
-                {pedido.compClienteConfere && <> · cliente confere</>}
-                {pedido.compPedidoConfere && <> · confere com o pedido</>}
+                <span className="text-gray-500">Status do sinal: </span>
+                {pedido.aguardandoSinal
+                  ? <strong className="text-amber-700">AGUARDANDO SINAL</strong>
+                  : (pedido.pagamentoConfirmado ? 'Pago' : 'Não confirmado')}
               </p>
-            )}
-            {pedido.aguardandoSinal && <p>⏳ <strong>AGUARDANDO SINAL</strong></p>}
-            {pedido.financeiroObservacao && <p>📝 Observação do Financeiro: {pedido.financeiroObservacao}</p>}
-            {pedido.observacoes && <p>📝 Observação do vendedor: {pedido.observacoes}</p>}
-            <p className="text-xs">Confira as observações, os documentos e as fotos antes de gerar a Ordem de Pedido.</p>
+              {pedido.financeiroObservacao && <p><span className="text-gray-500">Obs. do Financeiro: </span>{pedido.financeiroObservacao}</p>}
+            </div>
+
+            <div className="border-t border-gray-100 pt-3">
+              <p className="font-semibold text-gray-800 mb-1">Documentos anexados</p>
+              {(pedido.fotos && pedido.fotos.length > 0) ? (
+                <div className="flex flex-wrap gap-2">
+                  {pedido.fotos.map((f) => (
+                    <a key={f.id} href={f.url} target="_blank" rel="noreferrer" className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2 py-1 hover:bg-blue-100">
+                      {f.descricao || 'Documento'} ↗
+                    </a>
+                  ))}
+                </div>
+              ) : <p className="text-gray-500">Nenhum documento visível para o seu perfil.</p>}
+            </div>
           </div>
-          <button onClick={gerarOS} className="btn-primary">🏭 Gerar Ordem de Pedido</button>
+
+          <button onClick={gerarOS} className="btn-primary mt-4">🏭 Gerar Ordem de Pedido</button>
         </div>
       )}
 

@@ -40,7 +40,10 @@ export default function NovoPedido() {
   const [amostraEnviada, setAmostraEnviada] = useState(false)
   const [amostraChegou, setAmostraChegou] = useState(false)
   const [amostraEmbalagemObs, setAmostraEmbalagemObs] = useState('')
+  const [empresa, setEmpresa] = useState('')
   const [observacoes, setObservacoes] = useState('')
+  const [observacoesComerciais, setObservacoesComerciais] = useState('')
+  const [observacoesTecnicas, setObservacoesTecnicas] = useState('')
 
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
@@ -69,7 +72,10 @@ export default function NovoPedido() {
       formData.append('amostraEnviada', String(!amostraNaoSeAplica && amostraEnviada))
       formData.append('amostraChegou', String(!amostraNaoSeAplica && amostraChegou))
       if (amostraEmbalagemObs.trim()) formData.append('amostraEmbalagemObs', amostraEmbalagemObs.trim())
+      if (empresa.trim()) formData.append('empresa', empresa.trim())
       if (observacoes.trim()) formData.append('observacoes', observacoes.trim())
+      if (observacoesComerciais.trim()) formData.append('observacoesComerciais', observacoesComerciais.trim())
+      if (observacoesTecnicas.trim()) formData.append('observacoesTecnicas', observacoesTecnicas.trim())
       const { data } = await pedidosApi.criar(formData)
       navigate(`/pedidos/${data.id}`)
     } catch (err: any) {
@@ -99,6 +105,12 @@ export default function NovoPedido() {
 
         <div className="card divide-y divide-gray-100">
           <h2 className="section-title">Opcionais</h2>
+
+          <div className="pt-4">
+            <h3 className="font-semibold mb-1">Empresa / referência <span className="text-sm font-normal text-gray-500">(opcional)</span></h3>
+            <p className="text-xs text-gray-500 mb-2">Nome da empresa do cliente ou uma referência para localizar o pedido.</p>
+            <input value={empresa} onChange={(e) => setEmpresa(e.target.value)} className="input text-sm" placeholder="Ex.: Laticínios Boa Vista LTDA" />
+          </div>
 
           <div className="pt-4">
             <DocItem
@@ -157,15 +169,21 @@ export default function NovoPedido() {
             />
           </div>
 
-          <div className="pt-4">
-            <h3 className="font-semibold mb-2">Observações <span className="text-sm font-normal text-gray-500">(opcional)</span></h3>
-            <textarea
-              value={observacoes}
-              onChange={(e) => setObservacoes(e.target.value)}
-              rows={4}
-              placeholder="Anotações do vendedor sobre este pedido..."
-              className="input text-sm"
-            />
+          <div className="pt-4 space-y-4">
+            <div>
+              <h3 className="font-semibold mb-1">Observações comerciais <span className="text-sm font-normal text-gray-500">(opcional)</span></h3>
+              <p className="text-xs text-gray-500 mb-2">Condições, combinados com o cliente, pontos de negociação. Acompanham o pedido até a produção.</p>
+              <textarea value={observacoesComerciais} onChange={(e) => setObservacoesComerciais(e.target.value)} rows={3} placeholder="Ex.: entrega combinada em duas etapas; cliente retira na fábrica..." className="input text-sm" />
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1">Observações técnicas <span className="text-sm font-normal text-gray-500">(opcional)</span></h3>
+              <p className="text-xs text-gray-500 mb-2">Detalhes técnicos do equipamento que a produção precisa saber.</p>
+              <textarea value={observacoesTecnicas} onChange={(e) => setObservacoesTecnicas(e.target.value)} rows={3} placeholder="Ex.: bocal de 40mm; tensão 380V trifásico; acabamento escovado..." className="input text-sm" />
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1">Observações gerais <span className="text-sm font-normal text-gray-500">(opcional)</span></h3>
+              <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={3} placeholder="Outras anotações do vendedor sobre este pedido..." className="input text-sm" />
+            </div>
           </div>
         </div>
 
