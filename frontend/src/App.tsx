@@ -21,6 +21,7 @@ import PainelFinanceiro from './pages/Financeiro/PainelFinanceiro'
 import PainelFiscal from './pages/Fiscal/PainelFiscal'
 import GerenciarUsuarios from './pages/Usuarios/GerenciarUsuarios'
 import Perfil from './pages/Perfil'
+import Projetos from './pages/Projetos'
 import TrocarSenhaObrigatoria from './pages/TrocarSenhaObrigatoria'
 
 function RotaProtegida({ children }: { children: React.ReactNode }) {
@@ -64,6 +65,7 @@ function AppRoutes() {
         <Route path="fiscal" element={<PainelFiscal />} />
         <Route path="usuarios" element={<GerenciarUsuarios />} />
         <Route path="perfil" element={<Perfil />} />
+        <Route path="projetos" element={<Projetos />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

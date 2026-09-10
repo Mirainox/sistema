@@ -11,7 +11,7 @@ export type Setor =
   | 'ALMOXARIFADO_CONSUMIVEIS' | 'LOJA_PECAS' | 'MANUTENCAO' | 'EXPEDICAO' | 'TI' | 'PROJETOS'
 
 export type StatusPedido =
-  | 'AGUARDANDO_FINANCEIRO' | 'FINANCEIRO_APROVADO' | 'EM_PRODUCAO'
+  | 'AGUARDANDO_FINANCEIRO' | 'AGUARDANDO_CORRECAO' | 'FINANCEIRO_APROVADO' | 'EM_PRODUCAO'
   | 'AGUARDANDO_EXPEDICAO' | 'EXPEDIDO' | 'ENTREGUE' | 'CANCELADO'
 
 export type StatusOS =
@@ -68,6 +68,16 @@ export interface Pedido {
   aguardandoSinal?: boolean
   financeiroObservacao?: string | null
   financeiroLiberadoEm?: string | null
+  voltagem?: string | null
+  dadosConferidos?: boolean
+  desenhoNecessario?: boolean
+  desenhoStatus?: string | null
+  conferenciaGerenteEm?: string | null
+  erroPedido?: boolean
+  erroPedidoObs?: string | null
+  erroPedidoPor?: string | null
+  erroPedidoEm?: string | null
+  erroPedidoPrazo?: string | null
   observacoesTecnicas?: string
   observacoesComerciais?: string | null
   observacoes?: string | null
@@ -99,7 +109,9 @@ export interface SetorOS {
   responsavel: string
   recebeuFisico: boolean
   recebeuVirtual: boolean
-  pessoaRecebeu?: string
+  pessoaRecebeu?: string | null
+  pendencias?: string | null
+  dataRecebimento?: string | null
 }
 
 export interface Compra {

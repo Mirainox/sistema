@@ -12,6 +12,7 @@ export function formatarMoeda(valor: number) {
 
 export const STATUS_PEDIDO_LABEL: Record<string, string> = {
   AGUARDANDO_FINANCEIRO: 'Aguardando Financeiro',
+  AGUARDANDO_CORRECAO: 'Aguardando Correção',
   FINANCEIRO_APROVADO: 'Financeiro Aprovado',
   EM_PRODUCAO: 'Em Produção',
   AGUARDANDO_EXPEDICAO: 'Aguardando Expedição',
@@ -22,6 +23,7 @@ export const STATUS_PEDIDO_LABEL: Record<string, string> = {
 
 export const STATUS_PEDIDO_COR: Record<string, string> = {
   AGUARDANDO_FINANCEIRO: 'bg-yellow-100 text-yellow-800',
+  AGUARDANDO_CORRECAO: 'bg-red-100 text-red-800',
   FINANCEIRO_APROVADO: 'bg-blue-100 text-blue-800',
   EM_PRODUCAO: 'bg-purple-100 text-purple-800',
   AGUARDANDO_EXPEDICAO: 'bg-orange-100 text-orange-800',
@@ -122,4 +124,16 @@ export const TIPO_OS_LABEL: Record<string, string> = {
   GARANTIA: 'Garantia',
   DETALHE_TECNICO: 'Detalhe Técnico',
   INTERVENCAO: 'Intervenção',
+}
+
+export const VOLTAGEM_LABEL: Record<string, string> = {
+  '220_MONO': '220V monofásico',
+  '220_BI': '220V bifásico',
+  '220_TRI': '220V trifásico',
+  '380_TRI': '380V trifásico',
+}
+export const DESENHO_LABEL: Record<string, string> = {
+  PENDENTE: 'Aguardando desenhista',
+  EM_ANDAMENTO: 'Em andamento',
+  CONCLUIDO: 'Concluído',
 }

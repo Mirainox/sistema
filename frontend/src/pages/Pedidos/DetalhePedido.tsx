@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { pedidosApi, osApi } from '../../api'
 import { Pedido } from '../../types'
-import { formatarData, formatarMoeda, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL, STATUS_OS_COR, STATUS_OS_LABEL } from '../../utils/formatters'
+import { formatarData, formatarMoeda, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL, STATUS_OS_COR, STATUS_OS_LABEL, VOLTAGEM_LABEL, DESENHO_LABEL } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
 import AnexoDocumentoInput from '../../components/AnexoDocumentoInput'
 import PageHeader from '../../components/PageHeader'
@@ -49,9 +49,22 @@ export default function DetalhePedido() {
   const [erroAmostra, setErroAmostra] = useState('')
   const [okAmostra, setOkAmostra] = useState('')
 
+  const [gDados, setGDados] = useState(false)
+  const [gDesenho, setGDesenho] = useState(false)
+  const [gVoltagem, setGVoltagem] = useState('')
+  const [salvandoGer, setSalvandoGer] = useState(false)
+  const [erroGer, setErroGer] = useState('')
+  const [okGer, setOkGer] = useState('')
+  const [erroAberto, setErroAberto] = useState(false)
+  const [erroObs, setErroObs] = useState('')
+  const [erroPrazo, setErroPrazo] = useState('')
+  const [salvandoErro, setSalvandoErro] = useState(false)
+
   const podeMexerComprovante = hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL', 'FINANCEIRO')
   const podeRevisarFinanceiro = hasRole('FINANCEIRO', 'ADMIN', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL')
   const podeMexerAmostra = hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO')
+  const podeConferirGerente = hasRole('GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'ADMIN', 'GESTOR_ADMIN')
+  const podeMexerDesenho = hasRole('PROJETISTA', 'ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL')
 
   async function salvarComprovante() {
     if (!comprovanteFile) return
@@ -87,6 +100,9 @@ export default function DetalhePedido() {
     setAEnviada(!!data.amostraEnviada)
     setAChegou(!!data.amostraChegou)
     setAObs(data.amostraEmbalagemObs || '')
+    setGDados(!!data.dadosConferidos)
+    setGDesenho(!!data.desenhoNecessario)
+    setGVoltagem(data.voltagem || '')
   }
 
   useEffect(() => {
@@ -150,6 +166,63 @@ export default function DetalhePedido() {
     }
   }
 
+  async function recarregar() {
+    const { data } = await pedidosApi.buscar(id!)
+    setPedido(data)
+    carregarForms(data)
+  }
+
+  async function salvarConferencia() {
+    setSalvandoGer(true); setErroGer(''); setOkGer('')
+    try {
+      await pedidosApi.conferenciaGerente(id!, {
+        dadosConferidos: gDados,
+        desenhoNecessario: gDesenho,
+        voltagem: gVoltagem || null,
+      })
+      await recarregar()
+      setOkGer('Conferência salva.')
+    } catch (err: any) {
+      setErroGer(err.response?.data?.erro || 'Erro ao salvar a conferência')
+    } finally {
+      setSalvandoGer(false)
+    }
+  }
+
+  async function mudarDesenho(status: string) {
+    try {
+      await pedidosApi.atualizarDesenho(id!, status)
+      await recarregar()
+    } catch (err: any) {
+      alert(err.response?.data?.erro || 'Erro ao atualizar o desenho')
+    }
+  }
+
+  async function confirmarErro() {
+    if (!erroObs.trim()) { alert('A observação do erro é obrigatória.'); return }
+    if (!confirm('Devolver o pedido para correção? O vendedor e as gerências serão avisados.')) return
+    setSalvandoErro(true)
+    try {
+      await pedidosApi.marcarErro(id!, { erro: true, observacao: erroObs.trim(), prazo: erroPrazo || null })
+      setErroAberto(false); setErroObs(''); setErroPrazo('')
+      await recarregar()
+    } catch (err: any) {
+      alert(err.response?.data?.erro || 'Erro ao marcar o erro de pedido')
+    } finally {
+      setSalvandoErro(false)
+    }
+  }
+
+  async function resolverErro() {
+    if (!confirm('Marcar este pedido como corrigido?')) return
+    try {
+      await pedidosApi.marcarErro(id!, { resolver: true })
+      await recarregar()
+    } catch (err: any) {
+      alert(err.response?.data?.erro || 'Erro ao resolver')
+    }
+  }
+
   async function gerarOS() {
     if (!confirm('Gerar a Ordem de Pedido para a produção?')) return
     const { data } = await osApi.gerar(id!)
@@ -173,6 +246,22 @@ export default function DetalhePedido() {
           </span>
         }
       />
+
+      {/* ---------- Erro de Pedido ---------- */}
+      {pedido.erroPedido && (
+        <div className="rounded-xl border-2 border-red-400 bg-red-50 p-5">
+          <h2 className="font-bold text-red-800 text-lg mb-2">⚠️ ERRO DE PEDIDO — voltou para correção</h2>
+          <p className="text-sm text-red-800 whitespace-pre-wrap"><span className="font-semibold">Problema: </span>{pedido.erroPedidoObs}</p>
+          <p className="text-xs text-red-700 mt-2">
+            Devolvido por <strong>{pedido.erroPedidoPor}</strong>
+            {pedido.erroPedidoEm && <> em {formatarData(pedido.erroPedidoEm)}</>}
+            {pedido.erroPedidoPrazo && <> · prazo para correção: <strong>{formatarData(pedido.erroPedidoPrazo)}</strong></>}
+          </p>
+          {hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN') && (
+            <button onClick={resolverErro} className="btn-success mt-3">✅ Marcar como corrigido</button>
+          )}
+        </div>
+      )}
 
       {/* ---------- Resumo ---------- */}
       <div className="card">
@@ -209,6 +298,14 @@ export default function DetalhePedido() {
           <Chip ok={!!pedido.comprovanteSinalConferido}>Comprov. Sinal (Financeiro)</Chip>
           <Chip ok={!!pedido.comprovanteSinal} warn>Comprovante de Sinal (anexo)</Chip>
           {pedido.aguardandoSinal && <span className="chip chip--warn"><span>⏳</span>Aguardando sinal</span>}
+          <Chip ok={!!pedido.dadosConferidos}>Dados conferidos (Produção)</Chip>
+          {pedido.desenhoNecessario && (
+            <span className={`chip ${pedido.desenhoStatus === 'CONCLUIDO' ? 'chip--on' : 'chip--warn'}`}>
+              <span>{pedido.desenhoStatus === 'CONCLUIDO' ? '✅' : '🎨'}</span>
+              Desenho: {DESENHO_LABEL[pedido.desenhoStatus || 'PENDENTE']}
+            </span>
+          )}
+          {pedido.voltagem && <span className="chip chip--off"><span>⚡</span>{VOLTAGEM_LABEL[pedido.voltagem] || pedido.voltagem}</span>}
           <Chip ok={!!(pedido.os && pedido.os.length > 0)}>Ordem de Pedido gerada</Chip>
         </div>
         {(pedido.observacoes || pedido.observacoesComerciais || pedido.observacoesTecnicas) && (
@@ -340,10 +437,10 @@ export default function DetalhePedido() {
         </div>
       )}
 
-      {hasRole('GERENTE_OPERACIONAL', 'ADMIN') && pedido.status === 'FINANCEIRO_APROVADO' && (!pedido.os || pedido.os.length === 0) && (
+      {podeConferirGerente && pedido.status === 'FINANCEIRO_APROVADO' && !pedido.erroPedido && (!pedido.os || pedido.os.length === 0) && (
         <div className="note note--info">
-          <h2 className="font-semibold mb-1">🏭 Conferência inicial do pedido (Gerente de Produção)</h2>
-          <p className="text-sm text-blue-700 mb-4">Wellington — confira os dados abaixo antes de gerar a Ordem de Pedido para a produção.</p>
+          <h2 className="font-semibold mb-1">🏭 Conferência do Gerente de Produção</h2>
+          <p className="text-sm text-blue-700 mb-4">Wellington — leia todos os dados, marque a conferência, defina a voltagem e o desenho, e então gere a Ordem de Pedido.</p>
 
           <div className="bg-white rounded-lg border border-blue-200 p-4 text-sm text-gray-700 space-y-3">
             <div>
@@ -401,7 +498,90 @@ export default function DetalhePedido() {
             </div>
           </div>
 
-          <button onClick={gerarOS} className="btn-primary mt-4">🏭 Gerar Ordem de Pedido</button>
+          {/* Checklist do gerente */}
+          <div className="bg-white rounded-lg border border-blue-200 p-4 mt-3 space-y-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked={gDados} onChange={(e) => setGDados(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+              <span className="font-medium text-gray-800">Dados conferidos</span>
+              <span className="text-xs text-gray-500">(li e analisei todo o pedido)</span>
+            </label>
+
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={gDesenho} onChange={(e) => setGDesenho(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                <span className="font-medium text-gray-800">Desenho técnico necessário</span>
+              </label>
+              <p className="text-xs text-gray-500 ml-7">Ao salvar marcado, o sistema gera a tarefa de desenho para o William.</p>
+              {pedido.desenhoNecessario && pedido.desenhoStatus && (
+                <p className="text-xs text-blue-700 ml-7 mt-1">Tarefa do desenho: <strong>{DESENHO_LABEL[pedido.desenhoStatus]}</strong></p>
+              )}
+            </div>
+
+            <div>
+              <p className="font-medium text-gray-800 mb-1">Voltagem do equipamento</p>
+              <div className="flex flex-wrap gap-2">
+                {['220_MONO', '220_BI', '220_TRI', '380_TRI'].map((v) => (
+                  <label key={v} className={`px-3 py-1.5 rounded-lg border text-sm cursor-pointer ${gVoltagem === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-300 hover:bg-gray-50'}`}>
+                    <input type="radio" name="voltagem" value={v} checked={gVoltagem === v} onChange={(e) => setGVoltagem(e.target.value)} className="hidden" />
+                    {VOLTAGEM_LABEL[v]}
+                  </label>
+                ))}
+                {gVoltagem && <button type="button" onClick={() => setGVoltagem('')} className="text-xs text-gray-400 hover:text-gray-600">limpar</button>}
+              </div>
+            </div>
+
+            {erroGer && <p className="text-sm text-red-600">{erroGer}</p>}
+            {okGer && <p className="text-sm text-green-700">{okGer}</p>}
+            <button onClick={salvarConferencia} disabled={salvandoGer} className="btn-secondary">
+              {salvandoGer ? 'Salvando...' : 'Salvar conferência'}
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-3 mt-4">
+            <button onClick={gerarOS} disabled={!pedido.dadosConferidos} className="btn-primary" title={!pedido.dadosConferidos ? 'Marque "Dados conferidos" e salve primeiro' : ''}>
+              🏭 Gerar Ordem de Pedido
+            </button>
+            <button onClick={() => setErroAberto((v) => !v)} className="btn-danger">⚠️ Marcar Erro de Pedido</button>
+          </div>
+
+          {erroAberto && (
+            <div className="bg-white rounded-lg border-2 border-red-300 p-4 mt-3 space-y-3">
+              <p className="font-semibold text-red-800">Erro de Pedido — devolve para correção</p>
+              <div>
+                <label className="label">O que está errado? (obrigatório)</label>
+                <textarea value={erroObs} onChange={(e) => setErroObs(e.target.value)} rows={3} className="input text-sm" placeholder="Ex.: voltagem não informada · modelo divergente do pedido assinado · desenho ausente · falta documento..." />
+              </div>
+              <div>
+                <label className="label">Prazo para correção (opcional)</label>
+                <input type="date" value={erroPrazo} onChange={(e) => setErroPrazo(e.target.value)} className="input text-sm" />
+              </div>
+              <button onClick={confirmarErro} disabled={salvandoErro} className="btn-danger">
+                {salvandoErro ? 'Enviando...' : 'Devolver para correção'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ---------- Tarefa de desenho (William) ---------- */}
+      {podeMexerDesenho && pedido.desenhoNecessario && (
+        <div className="note note--warn">
+          <h2 className="font-semibold mb-1">🎨 Desenho técnico</h2>
+          <p className="text-sm text-amber-700 mb-3">
+            {pedido.equipamento} {pedido.modelo} — {pedido.cliente.nome}/{pedido.cliente.cidade}.
+            Status atual: <strong>{DESENHO_LABEL[pedido.desenhoStatus || 'PENDENTE']}</strong>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {pedido.desenhoStatus !== 'EM_ANDAMENTO' && pedido.desenhoStatus !== 'CONCLUIDO' && (
+              <button onClick={() => mudarDesenho('EM_ANDAMENTO')} className="btn-secondary">Iniciar desenho</button>
+            )}
+            {pedido.desenhoStatus !== 'CONCLUIDO' && (
+              <button onClick={() => mudarDesenho('CONCLUIDO')} className="btn-success">✅ Marcar concluído</button>
+            )}
+            {pedido.desenhoStatus === 'CONCLUIDO' && (
+              <button onClick={() => mudarDesenho('EM_ANDAMENTO')} className="btn-secondary">Reabrir</button>
+            )}
+          </div>
         </div>
       )}
 

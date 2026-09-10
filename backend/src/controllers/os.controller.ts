@@ -127,6 +127,31 @@ export async function confirmarRecebimento(req: Request, res: Response) {
   return res.json({ mensagem: 'Recebimento confirmado' })
 }
 
+// Controle de entrega por setor: entrega física / envio virtual, pessoa que
+// recebeu, data/hora e pendências.
+export async function atualizarSetor(req: AuthRequest, res: Response) {
+  const { setorId } = req.params
+  const { recebeuFisico, recebeuVirtual, pessoaRecebeu, pendencias } = req.body
+  const bool = (v: unknown) => v === true || v === 'true'
+
+  const atual = await prisma.setorOS.findUnique({ where: { id: setorId } })
+  if (!atual) return res.status(404).json({ erro: 'Setor da ordem não encontrado' })
+
+  const data: Record<string, unknown> = {}
+  if (recebeuFisico !== undefined) data.recebeuFisico = bool(recebeuFisico)
+  if (recebeuVirtual !== undefined) data.recebeuVirtual = bool(recebeuVirtual)
+  if (pessoaRecebeu !== undefined) data.pessoaRecebeu = String(pessoaRecebeu).trim() || null
+  if (pendencias !== undefined) data.pendencias = String(pendencias).trim() || null
+
+  const marcouRecebimento =
+    (data.recebeuFisico === true && !atual.recebeuFisico) ||
+    (data.recebeuVirtual === true && !atual.recebeuVirtual)
+  if (marcouRecebimento && !atual.dataRecebimento) data.dataRecebimento = new Date()
+
+  const setor = await prisma.setorOS.update({ where: { id: setorId }, data })
+  return res.json(setor)
+}
+
 export async function atualizarStatus(req: Request, res: Response) {
   const { id } = req.params
   const { status } = req.body

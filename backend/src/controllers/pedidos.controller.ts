@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { Role } from '@prisma/client'
 import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
-import { notificarPorRole } from '../services/notificacao.service'
+import { notificarPorRole, criarNotificacao } from '../services/notificacao.service'
 import { podeVer, podeVerTudo, SETORES_PEDIDO_ADMINISTRATIVO, SETORES_PEDIDO_PRODUCAO } from '../utils/visibilidade'
 
 function gerarNumeroPedido() {
@@ -288,6 +288,143 @@ export async function atualizarComprovante(req: AuthRequest, res: Response) {
       { pedidoId: pedido.id }
     )
   }
+
+  return res.json(pedido)
+}
+
+const VOLTAGENS = ['220_MONO', '220_BI', '220_TRI', '380_TRI']
+
+// Checklist do gerente de produção (Wellington): dados conferidos, necessidade de
+// desenho técnico (gera tarefa para o William) e voltagem do equipamento.
+export async function conferenciaGerente(req: AuthRequest, res: Response) {
+  const { id } = req.params
+  const { dadosConferidos, desenhoNecessario, voltagem } = req.body
+  const bool = (v: unknown) => v === true || v === 'true'
+
+  const existente = await prisma.pedido.findUnique({ where: { id }, include: { cliente: true } })
+  if (!existente) return res.status(404).json({ erro: 'Pedido não encontrado' })
+
+  const data: Record<string, unknown> = {}
+  if (dadosConferidos !== undefined) {
+    data.dadosConferidos = bool(dadosConferidos)
+    data.conferenciaGerenteEm = bool(dadosConferidos) ? new Date() : null
+  }
+  if (voltagem !== undefined) data.voltagem = VOLTAGENS.includes(voltagem) ? voltagem : null
+
+  let novoDesenho = false
+  if (desenhoNecessario !== undefined) {
+    const v = bool(desenhoNecessario)
+    data.desenhoNecessario = v
+    if (v && !existente.desenhoNecessario) {
+      data.desenhoStatus = 'PENDENTE'
+      novoDesenho = true
+    }
+    if (!v) data.desenhoStatus = null
+  }
+
+  const pedido = await prisma.pedido.update({ where: { id }, data })
+
+  if (novoDesenho) {
+    await notificarPorRole(
+      ['PROJETISTA', 'GESTOR_PRODUCAO'],
+      `Desenho técnico - Pedido #${pedido.numero}`,
+      `${existente.cliente.nome} - ${existente.cliente.cidade} | ${pedido.equipamento} ${pedido.modelo}. Prepare, ajuste ou valide o desenho.`,
+      'GERAL',
+      { pedidoId: pedido.id }
+    )
+  }
+
+  return res.json(pedido)
+}
+
+// Tarefa do desenhista (William): andamento do desenho técnico.
+export async function atualizarDesenho(req: AuthRequest, res: Response) {
+  const { id } = req.params
+  const { desenhoStatus } = req.body
+  const permitidos = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDO']
+  if (!permitidos.includes(desenhoStatus)) return res.status(400).json({ erro: 'Status de desenho inválido.' })
+
+  const pedido = await prisma.pedido.update({ where: { id }, data: { desenhoStatus } })
+
+  if (desenhoStatus === 'CONCLUIDO') {
+    await notificarPorRole(
+      ['GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO'],
+      `Desenho concluído - Pedido #${pedido.numero}`,
+      `${req.usuario!.nome} concluiu o desenho técnico do pedido #${pedido.numero}.`,
+      'GERAL',
+      { pedidoId: pedido.id }
+    )
+  }
+
+  return res.json(pedido)
+}
+
+// Erro de Pedido: o gerente identifica um problema e devolve o pedido para
+// correção. Notifica imediatamente o vendedor e as gerências.
+export async function marcarErro(req: AuthRequest, res: Response) {
+  const { id } = req.params
+  const { erro, observacao, prazo, resolver } = req.body
+
+  const existente = await prisma.pedido.findUnique({
+    where: { id },
+    include: { cliente: true, vendedor: { select: { id: true, nome: true } } },
+  })
+  if (!existente) return res.status(404).json({ erro: 'Pedido não encontrado' })
+
+  if (resolver === true || resolver === 'true') {
+    const pedido = await prisma.pedido.update({
+      where: { id },
+      data: { erroPedido: false, status: 'AGUARDANDO_FINANCEIRO' },
+    })
+    await notificarPorRole(
+      ['GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'GESTOR_ADMIN', 'FINANCEIRO'],
+      `Pedido #${pedido.numero} corrigido`,
+      `${req.usuario!.nome} marcou o pedido #${pedido.numero} como corrigido. Refazer a conferência.`,
+      'NOVO_PEDIDO',
+      { pedidoId: pedido.id }
+    )
+    return res.json(pedido)
+  }
+
+  if (!observacao || !String(observacao).trim()) {
+    return res.status(400).json({ erro: 'A observação do erro é obrigatória.' })
+  }
+
+  const quem = req.usuario!.nome
+  const agora = new Date()
+  const pedido = await prisma.pedido.update({
+    where: { id },
+    data: {
+      erroPedido: true,
+      erroPedidoObs: String(observacao).trim(),
+      erroPedidoPor: quem,
+      erroPedidoEm: agora,
+      erroPedidoPrazo: prazo ? new Date(prazo) : null,
+      status: 'AGUARDANDO_CORRECAO',
+    },
+  })
+
+  const prazoTxt = pedido.erroPedidoPrazo ? ` | Prazo para correção: ${pedido.erroPedidoPrazo.toLocaleDateString('pt-BR')}` : ''
+  const msg = `Pedido #${pedido.numero} | ${existente.cliente.nome} - ${existente.cliente.cidade} | Erro: ${pedido.erroPedidoObs} | Devolvido por: ${quem} em ${agora.toLocaleString('pt-BR')}${prazoTxt}`
+
+  // Vendedor que enviou o pedido
+  if (existente.vendedor?.id) {
+    await criarNotificacao({
+      usuarioId: existente.vendedor.id,
+      titulo: `⚠️ ERRO no Pedido #${pedido.numero} — corrija`,
+      mensagem: msg,
+      tipo: 'NOVO_PEDIDO',
+      pedidoId: pedido.id,
+    })
+  }
+  // Ciência para as gerências
+  await notificarPorRole(
+    ['GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'GESTOR_ADMIN', 'ADMIN'],
+    `⚠️ Erro de Pedido #${pedido.numero}`,
+    msg,
+    'NOVO_PEDIDO',
+    { pedidoId: pedido.id }
+  )
 
   return res.json(pedido)
 }

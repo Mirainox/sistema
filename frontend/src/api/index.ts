@@ -52,6 +52,15 @@ export const pedidosApi = {
       amostraEmbalagemObs?: string
     },
   ) => api.patch(`/pedidos/${id}/amostra`, data),
+  conferenciaGerente: (
+    id: string,
+    data: { dadosConferidos?: boolean; desenhoNecessario?: boolean; voltagem?: string | null },
+  ) => api.patch(`/pedidos/${id}/conferencia-gerente`, data),
+  atualizarDesenho: (id: string, desenhoStatus: string) => api.patch(`/pedidos/${id}/desenho`, { desenhoStatus }),
+  marcarErro: (
+    id: string,
+    data: { erro?: boolean; observacao?: string; prazo?: string | null; resolver?: boolean },
+  ) => api.patch(`/pedidos/${id}/erro`, data),
 }
 
 export const osApi = {
@@ -60,6 +69,11 @@ export const osApi = {
   gerar: (pedidoId: string) => api.post('/os', { pedidoId }),
   distribuir: (id: string, setores: any[]) => api.post(`/os/${id}/distribuir`, { setores }),
   confirmarRecebimento: (id: string, data: any) => api.patch(`/os/${id}/recebimento`, data),
+  atualizarSetor: (
+    id: string,
+    setorId: string,
+    data: { recebeuFisico?: boolean; recebeuVirtual?: boolean; pessoaRecebeu?: string; pendencias?: string },
+  ) => api.patch(`/os/${id}/setor/${setorId}`, data),
   atualizarStatus: (id: string, status: string) => api.patch(`/os/${id}/status`, { status }),
 }
 
