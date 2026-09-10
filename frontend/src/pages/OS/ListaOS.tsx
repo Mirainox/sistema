@@ -22,7 +22,7 @@ export default function ListaOS() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Ordens de Serviço" />
+      <PageHeader title="Ordem de Pedido" subtitle="Pedidos liberados que seguiram para a produção" />
 
       <div className="card">
         <div className="flex gap-4 mb-4">
@@ -44,7 +44,7 @@ export default function ListaOS() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left border-b border-gray-200">
-                  <th className="pb-3 font-semibold text-gray-700">Nº O.S.</th>
+                  <th className="pb-3 font-semibold text-gray-700">Nº</th>
                   <th className="pb-3 font-semibold text-gray-700">Pedido</th>
                   <th className="pb-3 font-semibold text-gray-700">Cliente</th>
                   <th className="pb-3 font-semibold text-gray-700">Cidade</th>
@@ -56,7 +56,7 @@ export default function ListaOS() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {lista.length === 0 ? (
-                  <tr><td colSpan={8} className="py-8 text-center text-gray-500">Nenhuma O.S. encontrada</td></tr>
+                  <tr><td colSpan={8} className="py-8 text-center text-gray-500">Nenhum registro encontrado</td></tr>
                 ) : (
                   lista.map((os) => (
                     <tr key={os.id} className="hover:bg-gray-50">

@@ -44,7 +44,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <CardResumo titulo="Total de Pedidos" valor={totais.totalPedidos} cor="border-blue-500" icon="📋" link="/pedidos" />
         <CardResumo titulo="Em Produção" valor={totais.pedidosEmProducao} cor="border-purple-500" icon="🏭" link="/pedidos?status=EM_PRODUCAO" />
-        <CardResumo titulo="Ordens de Produção" valor={totais.totalOS} cor="border-orange-500" icon="⚙️" link="/os" />
+        <CardResumo titulo="Ordem de Pedido" valor={totais.totalOS} cor="border-orange-500" icon="⚙️" link="/os" />
         <CardResumo titulo="Compras Pendentes" valor={totais.comprasPendentes} cor="border-red-500" icon="🛒" link="/compras" />
         <CardResumo titulo="Aguard. Financeiro" valor={totais.pedidosAguardandoFinanceiro} cor="border-yellow-500" icon="💰" link="/financeiro" />
         <CardResumo titulo="O.S. Abertas" valor={totais.manutencaoAberta} cor="border-teal-500" icon="🔧" link="/manutencao" />
