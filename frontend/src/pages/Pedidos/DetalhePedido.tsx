@@ -351,7 +351,7 @@ export default function DetalhePedido() {
               <dl className="dl">
                 <dt>Nº do pedido</dt><dd>#{pedido.numero}</dd>
                 <dt>Cliente</dt><dd>{pedido.cliente.nome}</dd>
-                <dt>Empresa / ref.</dt><dd>{pedido.empresa || '—'}</dd>
+                {pedido.empresa && (<><dt>Empresa / ref.</dt><dd>{pedido.empresa}</dd></>)}
                 <dt>Cidade</dt><dd>{pedido.cliente.cidade}/{pedido.cliente.estado}</dd>
                 <dt>Equipamento</dt><dd>{pedido.equipamento}</dd>
                 <dt>Modelo</dt><dd>{pedido.modelo}</dd>

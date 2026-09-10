@@ -40,7 +40,6 @@ export default function NovoPedido() {
   const [amostraEnviada, setAmostraEnviada] = useState(false)
   const [amostraChegou, setAmostraChegou] = useState(false)
   const [amostraEmbalagemObs, setAmostraEmbalagemObs] = useState('')
-  const [empresa, setEmpresa] = useState('')
   const [observacoes, setObservacoes] = useState('')
   const [observacoesComerciais, setObservacoesComerciais] = useState('')
   const [observacoesTecnicas, setObservacoesTecnicas] = useState('')
@@ -72,7 +71,6 @@ export default function NovoPedido() {
       formData.append('amostraEnviada', String(!amostraNaoSeAplica && amostraEnviada))
       formData.append('amostraChegou', String(!amostraNaoSeAplica && amostraChegou))
       if (amostraEmbalagemObs.trim()) formData.append('amostraEmbalagemObs', amostraEmbalagemObs.trim())
-      if (empresa.trim()) formData.append('empresa', empresa.trim())
       if (observacoes.trim()) formData.append('observacoes', observacoes.trim())
       if (observacoesComerciais.trim()) formData.append('observacoesComerciais', observacoesComerciais.trim())
       if (observacoesTecnicas.trim()) formData.append('observacoesTecnicas', observacoesTecnicas.trim())
@@ -105,12 +103,6 @@ export default function NovoPedido() {
 
         <div className="card divide-y divide-gray-100">
           <h2 className="section-title">Opcionais</h2>
-
-          <div className="pt-4">
-            <h3 className="font-semibold mb-1">Empresa / referência <span className="text-sm font-normal text-gray-500">(opcional)</span></h3>
-            <p className="text-xs text-gray-500 mb-2">Nome da empresa do cliente ou uma referência para localizar o pedido.</p>
-            <input value={empresa} onChange={(e) => setEmpresa(e.target.value)} className="input text-sm" placeholder="Ex.: Laticínios Boa Vista LTDA" />
-          </div>
 
           <div className="pt-4">
             <DocItem
