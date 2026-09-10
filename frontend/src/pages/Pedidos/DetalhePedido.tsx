@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { pedidosApi, osApi } from '../../api'
 import { Pedido } from '../../types'
-import { formatarData, formatarMoeda, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL, STATUS_OS_COR, STATUS_OS_LABEL, VOLTAGEM_LABEL } from '../../utils/formatters'
+import { formatarData, formatarDataHora, formatarMoeda, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL, STATUS_OS_COR, STATUS_OS_LABEL, VOLTAGEM_LABEL, FASE_ENTREGA_LABEL, FASE_ENTREGA_COR } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
 import AnexoDocumentoInput from '../../components/AnexoDocumentoInput'
 import PageHeader from '../../components/PageHeader'
@@ -64,6 +64,17 @@ export default function DetalhePedido() {
   const podeRevisarFinanceiro = hasRole('FINANCEIRO', 'ADMIN', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL')
   const podeMexerAmostra = hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO')
   const podeConferirGerente = hasRole('GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'ADMIN', 'GESTOR_ADMIN')
+  const podeMexerEntrega = hasRole('GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'ADMIN', 'GESTOR_ADMIN')
+
+  async function mudarFaseEntrega(fase: string) {
+    const nova = pedido?.faseEntrega === fase ? null : fase
+    try {
+      await pedidosApi.atualizarFaseEntrega(id!, nova)
+      await recarregar()
+    } catch (err: any) {
+      alert(err.response?.data?.erro || 'Erro ao salvar a fase de entrega')
+    }
+  }
 
   async function salvarComprovante() {
     if (!comprovanteFile) return
@@ -298,6 +309,12 @@ export default function DetalhePedido() {
           )}
           {pedido.voltagem && <span className="chip chip--off"><span>⚡</span>{VOLTAGEM_LABEL[pedido.voltagem] || pedido.voltagem}</span>}
           <Chip ok={!!(pedido.os && pedido.os.length > 0)}>Ordem de Pedido gerada</Chip>
+          {pedido.faseEntrega && (
+            <span className={`chip ${pedido.faseEntrega === 'ENTREGUE' ? 'chip--on' : 'chip--warn'}`}>
+              <span>{pedido.faseEntrega === 'ENTREGUE' ? '🏁' : '🚚'}</span>
+              {FASE_ENTREGA_LABEL[pedido.faseEntrega]}
+            </span>
+          )}
         </div>
         {(pedido.observacoes || pedido.observacoesComerciais || pedido.observacoesTecnicas) && (
           <div className="mt-4 border-t border-gray-100 pt-3 space-y-2">
@@ -660,6 +677,38 @@ export default function DetalhePedido() {
           <button onClick={salvarAmostra} disabled={salvandoAmostra} className="btn-primary mt-3">
             {salvandoAmostra ? 'Salvando...' : 'Salvar amostra'}
           </button>
+        </div>
+      )}
+
+      {/* ---------- Fase de entrega ---------- */}
+      {podeMexerEntrega && (pedido.faseEntrega || ['EM_PRODUCAO', 'AGUARDANDO_EXPEDICAO', 'EXPEDIDO', 'ENTREGUE'].includes(pedido.status)) && (
+        <div className="card">
+          <h2 className="section-title">🏁 Fase de entrega</h2>
+          <p className="text-xs text-gray-500 mb-3">Controle do encarregado geral de produção. Também aparece em <strong>Entregas do Mês</strong>.</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              ['PRODUCAO_FINALIZADA', 'Finalizada pela produção'],
+              ['EM_ROTA', 'Em rota de entrega'],
+              ['ENTREGUE', 'Entregue no destino'],
+            ].map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => mudarFaseEntrega(id)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border ${
+                  pedido.faseEntrega === id ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {pedido.faseEntrega && (
+            <p className="text-xs text-gray-500 mt-3">
+              <span className={`px-2 py-0.5 rounded-full font-medium ${FASE_ENTREGA_COR[pedido.faseEntrega]}`}>{FASE_ENTREGA_LABEL[pedido.faseEntrega]}</span>
+              {pedido.faseEntregaPor && pedido.faseEntregaEm && <> · por {pedido.faseEntregaPor} · {formatarDataHora(pedido.faseEntregaEm)}</>}
+              {pedido.entregueEm && <> · entregue em {formatarData(pedido.entregueEm)}</>}
+            </p>
+          )}
         </div>
       )}
 

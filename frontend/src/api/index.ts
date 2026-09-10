@@ -57,6 +57,8 @@ export const pedidosApi = {
     data: { dadosConferidos?: boolean; desenhoNecessario?: boolean; voltagem?: string | null },
   ) => api.patch(`/pedidos/${id}/conferencia-gerente`, data),
   listarProjetos: () => api.get('/pedidos/projetos'),
+  listarEntregas: (mes?: string) => api.get('/pedidos/entregas', { params: mes ? { mes } : undefined }),
+  atualizarFaseEntrega: (id: string, faseEntrega: string | null) => api.patch(`/pedidos/${id}/entrega`, { faseEntrega }),
   marcarDesenhoEtapa: (id: string, etapa: 'recebido' | 'andamento' | 'finalizado', marcado: boolean) =>
     api.patch(`/pedidos/${id}/desenho`, { etapa, marcado }),
   anexarDesenho: (id: string, data: FormData) =>

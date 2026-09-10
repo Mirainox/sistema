@@ -137,3 +137,14 @@ export const DESENHO_LABEL: Record<string, string> = {
   EM_ANDAMENTO: 'Em andamento',
   CONCLUIDO: 'Concluído',
 }
+
+export const FASE_ENTREGA_LABEL: Record<string, string> = {
+  PRODUCAO_FINALIZADA: 'Finalizada pela produção',
+  EM_ROTA: 'Em rota de entrega',
+  ENTREGUE: 'Entregue no destino',
+}
+export const FASE_ENTREGA_COR: Record<string, string> = {
+  PRODUCAO_FINALIZADA: 'bg-amber-100 text-amber-800',
+  EM_ROTA: 'bg-blue-100 text-blue-800',
+  ENTREGUE: 'bg-green-100 text-green-800',
+}

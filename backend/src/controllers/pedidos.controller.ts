@@ -516,6 +516,66 @@ export async function marcarErro(req: AuthRequest, res: Response) {
   return res.json(pedido)
 }
 
+const FASES_ENTREGA = ['PRODUCAO_FINALIZADA', 'EM_ROTA', 'ENTREGUE']
+const STATUS_POR_FASE: Record<string, string> = {
+  PRODUCAO_FINALIZADA: 'AGUARDANDO_EXPEDICAO',
+  EM_ROTA: 'EXPEDIDO',
+  ENTREGUE: 'ENTREGUE',
+}
+
+// Entregas do mês — máquinas finalizadas pela produção, em rota ou já entregues.
+export async function listarEntregas(req: AuthRequest, res: Response) {
+  const mes = String(req.query.mes || '') // "YYYY-MM"; vazio = mês atual
+  const ref = /^\d{4}-\d{2}$/.test(mes) ? mes : new Date().toISOString().slice(0, 7)
+  const [ano, m] = ref.split('-').map(Number)
+  const inicio = new Date(ano, m - 1, 1)
+  const fim = new Date(ano, m, 1)
+
+  const pedidos = await prisma.pedido.findMany({
+    where: {
+      OR: [
+        { faseEntrega: { not: null } },
+        { status: { in: ['AGUARDANDO_EXPEDICAO', 'EXPEDIDO', 'ENTREGUE'] } },
+      ],
+    },
+    include: { cliente: true, vendedor: { select: { nome: true } } },
+    orderBy: { updatedAt: 'desc' },
+  })
+
+  const doMes = pedidos.filter((p) => {
+    const d = p.faseEntregaEm || p.updatedAt
+    return d >= inicio && d < fim
+  })
+
+  return res.json({ mes: ref, pedidos: doMes })
+}
+
+// Encarregado geral de produção define a fase de entrega do pedido.
+export async function atualizarFaseEntrega(req: AuthRequest, res: Response) {
+  const { id } = req.params
+  const { faseEntrega } = req.body
+
+  const existente = await prisma.pedido.findUnique({ where: { id } })
+  if (!existente) return res.status(404).json({ erro: 'Pedido não encontrado' })
+
+  if (faseEntrega !== null && faseEntrega !== '' && !FASES_ENTREGA.includes(faseEntrega)) {
+    return res.status(400).json({ erro: 'Fase de entrega inválida.' })
+  }
+
+  const agora = new Date()
+  const limpa = faseEntrega === null || faseEntrega === ''
+  const data: Record<string, unknown> = {
+    faseEntrega: limpa ? null : faseEntrega,
+    faseEntregaPor: limpa ? null : req.usuario!.nome,
+    faseEntregaEm: limpa ? null : agora,
+    entregueEm: faseEntrega === 'ENTREGUE' ? agora : (existente.faseEntrega === 'ENTREGUE' ? null : existente.entregueEm),
+  }
+  if (!limpa && STATUS_POR_FASE[faseEntrega]) data.status = STATUS_POR_FASE[faseEntrega] as any
+
+  const pedido = await prisma.pedido.update({ where: { id }, data })
+  return res.json(pedido)
+}
+
 export async function atualizar(req: Request, res: Response) {
   const { id } = req.params
   const pedido = await prisma.pedido.update({ where: { id }, data: req.body })

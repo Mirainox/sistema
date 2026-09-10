@@ -20,6 +20,7 @@ const menuItems: MenuItem[] = [
   { label: 'Checklists', path: '/checklists', icon: '✅' },
   { label: 'O.S. (Manutenção)', path: '/manutencao', icon: '🔧', roles: ['ADMIN', 'DIRETOR', 'GERENTE_OPERACIONAL', 'MANUTENCAO', 'LOJA_PECAS', 'PRODUCAO'] },
   { label: 'Expedição', path: '/expedicao', icon: '🚚', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL', 'EXPEDICAO'] },
+  { label: 'Entregas do Mês', path: '/entregas', icon: '🏁', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'EXPEDICAO'] },
   { label: 'Financeiro', path: '/financeiro', icon: '💰', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'FINANCEIRO', 'GERENTE_OPERACIONAL'] },
   { label: 'Fiscal', path: '/fiscal', icon: '🧾', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'FISCAL', 'GERENTE_OPERACIONAL'] },
   { label: 'RH / EPIs', path: '/rh', icon: '👷', roles: ['ADMIN', 'DIRETOR', 'RH', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL'] },

@@ -82,6 +82,11 @@ export interface Pedido {
   desenhoFinalizado?: boolean
   desenhoFinalizadoPor?: string | null
   desenhoFinalizadoEm?: string | null
+  faseEntrega?: string | null
+  faseEntregaPor?: string | null
+  faseEntregaEm?: string | null
+  entregueEm?: string | null
+  updatedAt?: string
   erroPedido?: boolean
   erroPedidoObs?: string | null
   erroPedidoPor?: string | null

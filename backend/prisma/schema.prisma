@@ -233,6 +233,11 @@ model Pedido {
   desenhoFinalizado    Boolean      @default(false)
   desenhoFinalizadoPor String?
   desenhoFinalizadoEm  DateTime?
+  // Fase de entrega — controlada pelo encarregado geral de produção
+  faseEntrega          String?
+  faseEntregaPor       String?
+  faseEntregaEm        DateTime?
+  entregueEm           DateTime?
   // Erro de pedido (retorno para correção)
   erroPedido           Boolean      @default(false)
   erroPedidoObs        String?
