@@ -141,6 +141,8 @@ export interface Notificacao {
 
 export interface Manutencao {
   id: string
+  numero?: string | null
+  tipo: string
   cliente: Cliente
   equipamento: string
   problema: string

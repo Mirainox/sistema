@@ -1,6 +1,13 @@
 import { Request, Response } from 'express'
+import { TipoOS } from '@prisma/client'
 import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
+
+const TIPOS_OS: TipoOS[] = ['MANUTENCAO', 'CONSERTO', 'REFORMA', 'GARANTIA', 'DETALHE_TECNICO', 'INTERVENCAO']
+
+function gerarNumeroOS() {
+  return `OS-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`
+}
 
 export async function listar(req: Request, res: Response) {
   const { status, search } = req.query
@@ -47,8 +54,12 @@ export async function abrir(req: AuthRequest, res: Response) {
     })
   }
 
+  const tipo: TipoOS = TIPOS_OS.includes(data.tipo) ? data.tipo : 'MANUTENCAO'
+
   const manutencao = await prisma.manutencao.create({
     data: {
+      numero: gerarNumeroOS(),
+      tipo,
       clienteId: cliente.id,
       equipamento: data.equipamento,
       problema: data.problema,

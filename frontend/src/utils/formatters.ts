@@ -112,3 +112,12 @@ export const ROLE_LABEL: Record<string, string> = {
   LOJA_PECAS: 'Loja de Peças',
   EXPEDICAO: 'Expedição',
 }
+
+export const TIPO_OS_LABEL: Record<string, string> = {
+  MANUTENCAO: 'Manutenção',
+  CONSERTO: 'Conserto',
+  REFORMA: 'Reforma',
+  GARANTIA: 'Garantia',
+  DETALHE_TECNICO: 'Detalhe Técnico',
+  INTERVENCAO: 'Intervenção',
+}

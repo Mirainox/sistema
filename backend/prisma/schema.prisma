@@ -111,6 +111,17 @@ enum TipoNotificacao {
   GERAL
 }
 
+// Tipos de O.S. (o módulo antes chamado "Manutenção"). O.S. é usada só para
+// pós-venda / equipamento existente; venda de máquina nova é sempre Pedido.
+enum TipoOS {
+  MANUTENCAO
+  CONSERTO
+  REFORMA
+  GARANTIA
+  DETALHE_TECNICO
+  INTERVENCAO
+}
+
 enum TipoChecklist {
   COMERCIAL_VENDEDOR
   DISTRIBUICAO_OS
@@ -381,6 +392,8 @@ model EpiEntrega {
 
 model Manutencao {
   id                     String           @id @default(cuid())
+  numero                 String?          @unique
+  tipo                   TipoOS           @default(MANUTENCAO)
   clienteId              String
   cliente                Cliente          @relation(fields: [clienteId], references: [id])
   equipamento            String
