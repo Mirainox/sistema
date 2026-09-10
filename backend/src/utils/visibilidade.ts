@@ -7,7 +7,8 @@ export const PERFIS_VISAO_TOTAL: Role[] = ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', '
 
 export const SETORES_PEDIDO_ADMINISTRATIVO: Role[] = ['FINANCEIRO', 'FISCAL', 'EXPEDICAO']
 
-export const SETORES_PEDIDO_PRODUCAO: Role[] = ['PRODUCAO']
+// Projetos/Desenhos (William) faz parte da produção.
+export const SETORES_PEDIDO_PRODUCAO: Role[] = ['PRODUCAO', 'PROJETISTA']
 
 export function podeVerTudo(role: Role): boolean {
   return PERFIS_VISAO_TOTAL.includes(role)

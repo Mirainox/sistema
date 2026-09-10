@@ -8,6 +8,7 @@ import FotoInput from '../../components/FotoInput'
 import PageHeader from '../../components/PageHeader'
 
 const SETORES_PRODUCAO = [
+  { setor: 'PROJETOS', label: 'Projetos e Desenhos', responsavel: 'William' },
   { setor: 'PRODUCAO_INOX', label: 'Produção Inox', responsavel: 'Israel' },
   { setor: 'CALDEIRARIA', label: 'Caldeiraria', responsavel: 'Gabriel' },
   { setor: 'USINAGEM', label: 'Usinagem', responsavel: 'Hernani Mariano' },
@@ -73,7 +74,7 @@ export default function PainelProducao() {
 
       <div className="card">
         <h2 className="font-semibold mb-4">Setores de Produção</h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {SETORES_PRODUCAO.map((s) => (
             <div key={s.setor} className="bg-gray-50 border rounded-lg p-3 text-center">
               <p className="font-medium text-sm">{s.label}</p>

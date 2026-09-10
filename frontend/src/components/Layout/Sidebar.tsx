@@ -15,7 +15,7 @@ const menuItems: MenuItem[] = [
   { label: 'Ordem de Pedido', path: '/os', icon: '⚙️', roles: ['ADMIN', 'DIRETOR', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO', 'ALMOXARIFE', 'PROJETISTA'] },
   { label: 'Compras', path: '/compras', icon: '🛒', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'COMPRADOR', 'GERENTE_OPERACIONAL', 'ALMOXARIFE', 'PRODUCAO'] },
   { label: 'Almoxarifado', path: '/estoque', icon: '📦', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL'] },
-  { label: 'Produção', path: '/producao', icon: '🏭', roles: ['ADMIN', 'DIRETOR', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO', 'ALMOXARIFE'] },
+  { label: 'Produção', path: '/producao', icon: '🏭', roles: ['ADMIN', 'DIRETOR', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO', 'ALMOXARIFE', 'PROJETISTA'] },
   { label: 'Projetos e Desenhos', path: '/projetos', icon: '🎨', roles: ['ADMIN', 'DIRETOR', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PROJETISTA'] },
   { label: 'Checklists', path: '/checklists', icon: '✅' },
   { label: 'O.S. (Manutenção)', path: '/manutencao', icon: '🔧', roles: ['ADMIN', 'DIRETOR', 'GERENTE_OPERACIONAL', 'MANUTENCAO', 'LOJA_PECAS', 'PRODUCAO'] },
