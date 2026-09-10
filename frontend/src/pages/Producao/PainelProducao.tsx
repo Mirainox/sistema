@@ -75,12 +75,24 @@ export default function PainelProducao() {
       <div className="card">
         <h2 className="font-semibold mb-4">Setores de Produção</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {SETORES_PRODUCAO.map((s) => (
-            <div key={s.setor} className="bg-gray-50 border rounded-lg p-3 text-center">
-              <p className="font-medium text-sm">{s.label}</p>
-              <p className="text-xs text-gray-500 mt-1">{s.responsavel}</p>
-            </div>
-          ))}
+          {SETORES_PRODUCAO.map((s) => {
+            const conteudo = (
+              <>
+                <p className="font-medium text-sm">{s.label}</p>
+                <p className="text-xs text-gray-500 mt-1">{s.responsavel}</p>
+              </>
+            )
+            return s.setor === 'PROJETOS' ? (
+              <Link key={s.setor} to="/projetos" className="bg-gray-50 border rounded-lg p-3 text-center hover:bg-gray-100 hover:border-blue-300 transition-colors">
+                {conteudo}
+                <p className="text-[11px] text-blue-600 mt-1">ver desenhos →</p>
+              </Link>
+            ) : (
+              <div key={s.setor} className="bg-gray-50 border rounded-lg p-3 text-center">
+                {conteudo}
+              </div>
+            )
+          })}
         </div>
       </div>
 
