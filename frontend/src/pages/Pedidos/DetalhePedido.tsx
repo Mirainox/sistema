@@ -256,7 +256,11 @@ export default function DetalhePedido() {
           <div className="bg-white rounded-lg border border-amber-200 p-4 space-y-4">
             {/* 1. Conferência do comprovante de sinal */}
             <div>
-              <p className="text-sm font-semibold text-gray-800 mb-2">1. Conferência do comprovante de sinal</p>
+              <p className="text-sm font-semibold text-gray-800 mb-1">1. Conferência do comprovante de sinal</p>
+              <p className="text-xs text-gray-500 mb-2">
+                Preencha quando houver comprovante anexado.
+                {!pedido.comprovanteSinal && <span className="text-amber-600"> Nenhum comprovante anexado ainda.</span>}
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="label">Valor do comprovante</label>
@@ -274,7 +278,7 @@ export default function DetalhePedido() {
               <div className="mt-2 space-y-1">
                 <label className="flex items-center gap-3 cursor-pointer text-sm">
                   <input type="checkbox" checked={fCompCliente} onChange={(e) => setFCompCliente(e.target.checked)} className="w-4 h-4 accent-blue-600" />
-                  Nome do cliente confere
+                  Nome do cliente confere <span className="text-gray-400">(pedido: {pedido.cliente.nome})</span>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer text-sm">
                   <input type="checkbox" checked={fCompPedido} onChange={(e) => setFCompPedido(e.target.checked)} className="w-4 h-4 accent-blue-600" />
