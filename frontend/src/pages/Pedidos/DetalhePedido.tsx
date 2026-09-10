@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { pedidosApi, osApi } from '../../api'
 import { Pedido } from '../../types'
-import { formatarData, formatarMoeda, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL, STATUS_OS_COR, STATUS_OS_LABEL, VOLTAGEM_LABEL, DESENHO_LABEL } from '../../utils/formatters'
+import { formatarData, formatarMoeda, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL, STATUS_OS_COR, STATUS_OS_LABEL, VOLTAGEM_LABEL } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
 import AnexoDocumentoInput from '../../components/AnexoDocumentoInput'
 import PageHeader from '../../components/PageHeader'
@@ -64,7 +64,6 @@ export default function DetalhePedido() {
   const podeRevisarFinanceiro = hasRole('FINANCEIRO', 'ADMIN', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL')
   const podeMexerAmostra = hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO')
   const podeConferirGerente = hasRole('GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'ADMIN', 'GESTOR_ADMIN')
-  const podeMexerDesenho = hasRole('PROJETISTA', 'ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL')
 
   async function salvarComprovante() {
     if (!comprovanteFile) return
@@ -189,15 +188,6 @@ export default function DetalhePedido() {
     }
   }
 
-  async function mudarDesenho(status: string) {
-    try {
-      await pedidosApi.atualizarDesenho(id!, status)
-      await recarregar()
-    } catch (err: any) {
-      alert(err.response?.data?.erro || 'Erro ao atualizar o desenho')
-    }
-  }
-
   async function confirmarErro() {
     if (!erroObs.trim()) { alert('A observação do erro é obrigatória.'); return }
     if (!confirm('Devolver o pedido para correção? O vendedor e as gerências serão avisados.')) return
@@ -300,10 +290,10 @@ export default function DetalhePedido() {
           <Chip ok={!!pedido.comprovanteSinal} warn>Comprovante de Sinal (anexo)</Chip>
           {pedido.aguardandoSinal && <span className="chip chip--warn"><span>⏳</span>Aguardando sinal</span>}
           <Chip ok={!!pedido.dadosConferidos}>Dados conferidos (Produção)</Chip>
-          {pedido.desenhoNecessario && (
-            <span className={`chip ${pedido.desenhoStatus === 'CONCLUIDO' ? 'chip--on' : 'chip--warn'}`}>
-              <span>{pedido.desenhoStatus === 'CONCLUIDO' ? '✅' : '🎨'}</span>
-              Desenho: {DESENHO_LABEL[pedido.desenhoStatus || 'PENDENTE']}
+          {(pedido.desenhoNecessario || pedido.desenhoRecebido || pedido.desenhoAndamento || pedido.desenhoFinalizado) && (
+            <span className={`chip ${pedido.desenhoFinalizado ? 'chip--on' : 'chip--warn'}`}>
+              <span>{pedido.desenhoFinalizado ? '✅' : '🎨'}</span>
+              Desenho: {pedido.desenhoFinalizado ? 'Finalizado' : pedido.desenhoAndamento ? 'Em andamento' : pedido.desenhoRecebido ? 'Recebido' : 'A receber'}
             </span>
           )}
           {pedido.voltagem && <span className="chip chip--off"><span>⚡</span>{VOLTAGEM_LABEL[pedido.voltagem] || pedido.voltagem}</span>}
@@ -512,9 +502,9 @@ export default function DetalhePedido() {
                 <input type="checkbox" checked={gDesenho} onChange={(e) => setGDesenho(e.target.checked)} className="w-4 h-4 accent-blue-600" />
                 <span className="font-medium text-gray-800">Desenho técnico necessário</span>
               </label>
-              <p className="text-xs text-gray-500 ml-7">Ao salvar marcado, o sistema gera a tarefa de desenho para o William.</p>
-              {pedido.desenhoNecessario && pedido.desenhoStatus && (
-                <p className="text-xs text-blue-700 ml-7 mt-1">Tarefa do desenho: <strong>{DESENHO_LABEL[pedido.desenhoStatus]}</strong></p>
+              <p className="text-xs text-gray-500 ml-7">Ao salvar marcado, o pedido entra na Área de Trabalho do William (Projetos e Desenhos).</p>
+              {(pedido.desenhoRecebido || pedido.desenhoAndamento || pedido.desenhoFinalizado) && (
+                <p className="text-xs text-blue-700 ml-7 mt-1">Desenho: <strong>{pedido.desenhoFinalizado ? 'Finalizado' : pedido.desenhoAndamento ? 'Em andamento' : 'Recebido pelo William'}</strong></p>
               )}
             </div>
 
@@ -564,24 +554,27 @@ export default function DetalhePedido() {
         </div>
       )}
 
-      {/* ---------- Tarefa de desenho (William) ---------- */}
-      {podeMexerDesenho && pedido.desenhoNecessario && (
-        <div className="note note--warn">
-          <h2 className="font-semibold mb-1">🎨 Desenho técnico</h2>
-          <p className="text-sm text-amber-700 mb-3">
-            {pedido.equipamento} {pedido.modelo} — {pedido.cliente.nome}/{pedido.cliente.cidade}.
-            Status atual: <strong>{DESENHO_LABEL[pedido.desenhoStatus || 'PENDENTE']}</strong>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {pedido.desenhoStatus !== 'EM_ANDAMENTO' && pedido.desenhoStatus !== 'CONCLUIDO' && (
-              <button onClick={() => mudarDesenho('EM_ANDAMENTO')} className="btn-secondary">Iniciar desenho</button>
-            )}
-            {pedido.desenhoStatus !== 'CONCLUIDO' && (
-              <button onClick={() => mudarDesenho('CONCLUIDO')} className="btn-success">✅ Marcar concluído</button>
-            )}
-            {pedido.desenhoStatus === 'CONCLUIDO' && (
-              <button onClick={() => mudarDesenho('EM_ANDAMENTO')} className="btn-secondary">Reabrir</button>
-            )}
+      {/* ---------- Desenho técnico (somente leitura — William edita em Projetos e Desenhos) ---------- */}
+      {(pedido.desenhoNecessario || pedido.desenhoRecebido || pedido.desenhoAndamento || pedido.desenhoFinalizado) && (
+        <div className="card">
+          <h2 className="section-title">🎨 Desenho técnico</h2>
+          <p className="text-xs text-gray-500 mb-3">O William acompanha e atualiza este desenho no módulo <strong>Projetos e Desenhos</strong>.</p>
+          <div className="space-y-2">
+            {([
+              ['Pedido recebido', pedido.desenhoRecebido, pedido.desenhoRecebidoPor, pedido.desenhoRecebidoEm, 'Recebido por'],
+              ['Desenho em andamento', pedido.desenhoAndamento, pedido.desenhoAndamentoPor, pedido.desenhoAndamentoEm, 'Iniciado por'],
+              ['Desenho finalizado', pedido.desenhoFinalizado, pedido.desenhoFinalizadoPor, pedido.desenhoFinalizadoEm, 'Finalizado por'],
+            ] as const).map(([titulo, ok, por, em, rot]) => (
+              <div key={titulo} className={`rounded-lg border p-3 ${ok ? 'border-green-200 bg-green-50' : 'border-gray-200'}`}>
+                <p className="font-medium text-gray-800 text-sm">{ok ? '☑️' : '☐'} {titulo}</p>
+                {ok && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    {rot}: <strong>{por || '—'}</strong>
+                    {em && <> · {formatarData(em)} · {new Date(em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</>}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}

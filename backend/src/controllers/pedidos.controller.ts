@@ -345,26 +345,105 @@ export async function conferenciaGerente(req: AuthRequest, res: Response) {
   return res.json(pedido)
 }
 
-// Tarefa do desenhista (William): andamento do desenho técnico.
-export async function atualizarDesenho(req: AuthRequest, res: Response) {
+// Pedidos que entram na Área de Trabalho do William (Projetos e Desenhos):
+// quando o gerente marca "desenho necessário" na conferência OU quando a Ordem
+// de Pedido é distribuída incluindo o setor "Projetos e Desenhos".
+export async function listarProjetos(req: AuthRequest, res: Response) {
+  const role = req.usuario!.role
+  const pedidos = await prisma.pedido.findMany({
+    where: {
+      status: { notIn: ['CANCELADO'] },
+      OR: [
+        { desenhoNecessario: true },
+        { os: { some: { setoresOS: { some: { setor: 'PROJETOS' } } } } },
+      ],
+    },
+    include: {
+      cliente: true,
+      vendedor: { select: { nome: true } },
+      fotos: { include: { usuario: { select: { nome: true } } }, orderBy: { createdAt: 'desc' } },
+      os: { select: { id: true, numero: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  const out = pedidos.map((p) => ({
+    ...p,
+    fotos: p.fotos.filter((f) => podeVer(role, f.visivelPara)),
+  }))
+  return res.json(out)
+}
+
+// Mini checklist do William (Projetos e Desenhos): 3 etapas, cada uma registra
+// automaticamente quem marcou + data + hora (padrão da Distribuição).
+export async function marcarDesenhoEtapa(req: AuthRequest, res: Response) {
   const { id } = req.params
-  const { desenhoStatus } = req.body
-  const permitidos = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDO']
-  if (!permitidos.includes(desenhoStatus)) return res.status(400).json({ erro: 'Status de desenho inválido.' })
+  const { etapa, marcado } = req.body
+  const on = marcado === true || marcado === 'true'
 
-  const pedido = await prisma.pedido.update({ where: { id }, data: { desenhoStatus } })
+  const colunas: Record<string, [string, string, string]> = {
+    recebido: ['desenhoRecebido', 'desenhoRecebidoPor', 'desenhoRecebidoEm'],
+    andamento: ['desenhoAndamento', 'desenhoAndamentoPor', 'desenhoAndamentoEm'],
+    finalizado: ['desenhoFinalizado', 'desenhoFinalizadoPor', 'desenhoFinalizadoEm'],
+  }
+  const cols = colunas[etapa]
+  if (!cols) return res.status(400).json({ erro: 'Etapa inválida.' })
 
-  if (desenhoStatus === 'CONCLUIDO') {
+  const atual = await prisma.pedido.findUnique({ where: { id } })
+  if (!atual) return res.status(404).json({ erro: 'Pedido não encontrado' })
+
+  const quem = req.usuario!.nome
+  const data: Record<string, unknown> = {
+    [cols[0]]: on,
+    [cols[1]]: on ? quem : null,
+    [cols[2]]: on ? new Date() : null,
+  }
+
+  // Mantém o resumo desenhoStatus em sincronia (usado em chips e relatórios).
+  const rec = etapa === 'recebido' ? on : atual.desenhoRecebido
+  const and = etapa === 'andamento' ? on : atual.desenhoAndamento
+  const fin = etapa === 'finalizado' ? on : atual.desenhoFinalizado
+  data.desenhoStatus = fin ? 'CONCLUIDO' : and ? 'EM_ANDAMENTO' : rec ? 'PENDENTE' : (atual.desenhoNecessario ? 'PENDENTE' : null)
+
+  const pedido = await prisma.pedido.update({ where: { id }, data })
+
+  if (etapa === 'finalizado' && on) {
     await notificarPorRole(
-      ['GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO'],
-      `Desenho concluído - Pedido #${pedido.numero}`,
-      `${req.usuario!.nome} concluiu o desenho técnico do pedido #${pedido.numero}.`,
+      ['GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'DIRETOR', 'ADMIN'],
+      `Desenho finalizado - Pedido #${pedido.numero}`,
+      `${quem} finalizou o desenho técnico do pedido #${pedido.numero}.`,
       'GERAL',
       { pedidoId: pedido.id }
     )
   }
 
   return res.json(pedido)
+}
+
+// William anexa foto/documento do desenho finalizado (fica vinculado ao pedido).
+export async function anexarDesenho(req: AuthRequest, res: Response) {
+  const { id } = req.params
+  const arquivo = req.file as Express.Multer.File | undefined
+  if (!arquivo) return res.status(400).json({ erro: 'Nenhum arquivo enviado' })
+
+  const pedido = await prisma.pedido.findUnique({ where: { id }, include: { cliente: true } })
+  if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' })
+
+  const foto = await prisma.foto.create({
+    data: {
+      pedidoId: id,
+      usuarioId: req.usuario!.id,
+      setor: 'PROJETOS',
+      url: `/uploads/${arquivo.filename}`,
+      descricao: 'Desenho técnico',
+      numeroPedido: pedido.numero,
+      nomeCliente: pedido.cliente.nome,
+      cidadeCliente: pedido.cliente.cidade,
+      visivelPara: ['PROJETISTA', 'GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'PRODUCAO'],
+    },
+    include: { usuario: { select: { nome: true } } },
+  })
+  return res.status(201).json(foto)
 }
 
 // Erro de Pedido: o gerente identifica um problema e devolve o pedido para

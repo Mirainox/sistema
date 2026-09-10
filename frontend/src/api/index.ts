@@ -56,7 +56,11 @@ export const pedidosApi = {
     id: string,
     data: { dadosConferidos?: boolean; desenhoNecessario?: boolean; voltagem?: string | null },
   ) => api.patch(`/pedidos/${id}/conferencia-gerente`, data),
-  atualizarDesenho: (id: string, desenhoStatus: string) => api.patch(`/pedidos/${id}/desenho`, { desenhoStatus }),
+  listarProjetos: () => api.get('/pedidos/projetos'),
+  marcarDesenhoEtapa: (id: string, etapa: 'recebido' | 'andamento' | 'finalizado', marcado: boolean) =>
+    api.patch(`/pedidos/${id}/desenho`, { etapa, marcado }),
+  anexarDesenho: (id: string, data: FormData) =>
+    api.post(`/pedidos/${id}/desenho-anexo`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   marcarErro: (
     id: string,
     data: { erro?: boolean; observacao?: string; prazo?: string | null; resolver?: boolean },

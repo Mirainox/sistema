@@ -73,6 +73,15 @@ export interface Pedido {
   desenhoNecessario?: boolean
   desenhoStatus?: string | null
   conferenciaGerenteEm?: string | null
+  desenhoRecebido?: boolean
+  desenhoRecebidoPor?: string | null
+  desenhoRecebidoEm?: string | null
+  desenhoAndamento?: boolean
+  desenhoAndamentoPor?: string | null
+  desenhoAndamentoEm?: string | null
+  desenhoFinalizado?: boolean
+  desenhoFinalizadoPor?: string | null
+  desenhoFinalizadoEm?: string | null
   erroPedido?: boolean
   erroPedidoObs?: string | null
   erroPedidoPor?: string | null

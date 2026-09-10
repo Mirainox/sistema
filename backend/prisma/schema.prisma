@@ -223,6 +223,16 @@ model Pedido {
   desenhoNecessario    Boolean      @default(false)
   desenhoStatus        String?
   conferenciaGerenteEm DateTime?
+  // Área de Trabalho do William (Projetos e Desenhos) — pessoa + data/hora por etapa
+  desenhoRecebido      Boolean      @default(false)
+  desenhoRecebidoPor   String?
+  desenhoRecebidoEm    DateTime?
+  desenhoAndamento     Boolean      @default(false)
+  desenhoAndamentoPor  String?
+  desenhoAndamentoEm   DateTime?
+  desenhoFinalizado    Boolean      @default(false)
+  desenhoFinalizadoPor String?
+  desenhoFinalizadoEm  DateTime?
   // Erro de pedido (retorno para correção)
   erroPedido           Boolean      @default(false)
   erroPedidoObs        String?

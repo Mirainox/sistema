@@ -1,11 +1,12 @@
 import { Router } from 'express'
-import { listar, buscar, criar, atualizar, atualizarStatus, atualizarComprovante, atualizarAmostra, confirmarChecklist, revisarFinanceiro, conferenciaGerente, atualizarDesenho, marcarErro } from '../controllers/pedidos.controller'
+import { listar, listarProjetos, buscar, criar, atualizar, atualizarStatus, atualizarComprovante, atualizarAmostra, confirmarChecklist, revisarFinanceiro, conferenciaGerente, marcarDesenhoEtapa, anexarDesenho, marcarErro } from '../controllers/pedidos.controller'
 import { autenticar } from '../middleware/auth'
 import { upload } from '../middleware/upload'
 
 const router = Router()
 router.use(autenticar)
 router.get('/', listar)
+router.get('/projetos', listarProjetos)
 router.get('/:id', buscar)
 router.post(
   '/',
@@ -21,7 +22,8 @@ router.put('/:id', atualizar)
 router.patch('/:id/comprovante', upload.single('comprovanteSinal'), atualizarComprovante)
 router.patch('/:id/amostra', atualizarAmostra)
 router.patch('/:id/conferencia-gerente', conferenciaGerente)
-router.patch('/:id/desenho', atualizarDesenho)
+router.patch('/:id/desenho', marcarDesenhoEtapa)
+router.post('/:id/desenho-anexo', upload.single('arquivo'), anexarDesenho)
 router.patch('/:id/erro', marcarErro)
 router.patch('/:id/status', atualizarStatus)
 router.patch('/:id/checklist', confirmarChecklist)
