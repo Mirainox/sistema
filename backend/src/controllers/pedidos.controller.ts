@@ -354,7 +354,6 @@ export async function conferenciaGerente(req: AuthRequest, res: Response) {
 // quando o gerente marca "desenho necessário" na conferência OU quando a Ordem
 // de Pedido é distribuída incluindo o setor "Projetos e Desenhos".
 export async function listarProjetos(req: AuthRequest, res: Response) {
-  const role = req.usuario!.role
   const pedidos = await prisma.pedido.findMany({
     where: {
       status: { notIn: ['CANCELADO'] },
@@ -372,14 +371,16 @@ export async function listarProjetos(req: AuthRequest, res: Response) {
     orderBy: { createdAt: 'desc' },
   })
 
-  // Nesta área só o documento "Pedido Gerado Produção" (e anexos de desenho)
-  // ficam disponíveis — Pedido Gerado, Pedido Assinado e Comprovante de Sinal
-  // não são do setor de Projetos e Desenhos.
-  const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role)
+  // Nesta área só o documento "Pedido Gerado Produção" (e os anexos de
+  // desenho, que são do próprio trabalho do William) ficam disponíveis —
+  // Pedido Gerado, Pedido Assinado e Comprovante de Sinal não são do setor de
+  // Projetos e Desenhos. Vale para todo mundo que abrir esta tela, inclusive
+  // quem tem acesso total ao pedido (é o conteúdo certo para este contexto,
+  // não uma questão de permissão de quem está olhando).
   const out = pedidos.map((p) => ({
     ...p,
-    fotos: p.fotos.filter((f) => podeVer(role, f.visivelPara)),
-    comprovanteSinal: comprovanteVisivel ? p.comprovanteSinal : null,
+    fotos: p.fotos.filter((f) => f.descricao === 'Pedido Gerado Produção' || f.descricao === 'Desenho técnico'),
+    comprovanteSinal: null,
   }))
   return res.json(out)
 }
@@ -392,7 +393,6 @@ export async function listarProjetos(req: AuthRequest, res: Response) {
 const SETORES_ALMOXARIFADO = ['ALMOXARIFADO_GERAL', 'ALMOXARIFADO_CONSUMIVEIS']
 
 export async function listarAlmoxarifado(req: AuthRequest, res: Response) {
-  const role = req.usuario!.role
   const pedidos = await prisma.pedido.findMany({
     where: {
       status: { notIn: ['CANCELADO'] },
@@ -413,14 +413,13 @@ export async function listarAlmoxarifado(req: AuthRequest, res: Response) {
     orderBy: { createdAt: 'desc' },
   })
 
-  // Mesma regra: só "Pedido Gerado Produção" (e anexos vinculados ao setor)
-  // ficam visíveis para o Almoxarifado — não Pedido Gerado, Pedido Assinado
-  // ou o Comprovante de Sinal.
-  const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role)
+  // Mesma regra, para todo mundo que abrir esta tela (inclusive quem tem
+  // acesso total ao pedido): só "Pedido Gerado Produção" fica disponível —
+  // não Pedido Gerado, Pedido Assinado nem o Comprovante de Sinal.
   const out = pedidos.map((p) => ({
     ...p,
-    fotos: p.fotos.filter((f) => podeVer(role, f.visivelPara)),
-    comprovanteSinal: comprovanteVisivel ? p.comprovanteSinal : null,
+    fotos: p.fotos.filter((f) => f.descricao === 'Pedido Gerado Produção'),
+    comprovanteSinal: null,
   }))
   return res.json(out)
 }

@@ -3,7 +3,7 @@ import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
 import { notificarPorRole } from '../services/notificacao.service'
 import { garantirExpedicao } from '../services/expedicao.service'
-import { podeVer, podeVerTudo, SETORES_PEDIDO_ADMINISTRATIVO } from '../utils/visibilidade'
+import { podeVerTudo, SETORES_PEDIDO_ADMINISTRATIVO } from '../utils/visibilidade'
 
 function gerarNumeroOS() {
   return `OS-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`
@@ -65,15 +65,14 @@ export async function buscar(req: AuthRequest, res: Response) {
   })
   if (!os) return res.status(404).json({ erro: 'O.S. não encontrada' })
 
-  // Na Ordem de Pedido, a produção só acessa o documento "Pedido Gerado
-  // Produção" — Pedido Gerado, Pedido Assinado e o Comprovante de Sinal não
-  // são do setor de produção.
-  const role = req.usuario!.role
-  const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role)
+  // Na Ordem de Pedido só o documento "Pedido Gerado Produção" aparece — é
+  // esse o único relevante para a produção acompanhar o trabalho. Pedido
+  // Gerado, Pedido Assinado e o Comprovante de Sinal ficam só no Pedido
+  // (para quem tem acesso comercial/financeiro), não aqui.
   const pedido = {
     ...os.pedido,
-    fotos: os.pedido.fotos.filter((f) => podeVer(role, f.visivelPara)),
-    comprovanteSinal: comprovanteVisivel ? os.pedido.comprovanteSinal : null,
+    fotos: os.pedido.fotos.filter((f) => f.descricao === 'Pedido Gerado Produção'),
+    comprovanteSinal: null,
   }
 
   return res.json({ ...os, pedido })
