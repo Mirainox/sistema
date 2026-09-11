@@ -13,9 +13,13 @@ function gerarNumeroPedido() {
 }
 
 export async function listar(req: AuthRequest, res: Response) {
-  const { status, search } = req.query
+  const { status, search, liberadoFinanceiro } = req.query
   const where: any = {}
   if (status) where.status = status
+  // Registro permanente do Financeiro: todo pedido que ele já liberou, mesmo
+  // que depois tenha avançado (produção, expedição, entregue) — controle do
+  // próprio funcionário, não depende do status atual do pedido.
+  if (liberadoFinanceiro === 'true') where.financeiroLiberadoEm = { not: null }
   if (search) {
     where.OR = [
       { numero: { contains: String(search), mode: 'insensitive' } },

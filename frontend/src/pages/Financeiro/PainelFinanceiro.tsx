@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { pedidosApi } from '../../api'
 import { Pedido } from '../../types'
-import { formatarData, formatarMoeda } from '../../utils/formatters'
+import { formatarData, formatarMoeda, STATUS_PEDIDO_LABEL, STATUS_PEDIDO_COR } from '../../utils/formatters'
 import PageHeader from '../../components/PageHeader'
 
 type Aba = 'aguardando' | 'sinal' | 'liberados'
@@ -16,7 +16,10 @@ export default function PainelFinanceiro() {
   useEffect(() => {
     Promise.all([
       pedidosApi.listar({ status: 'AGUARDANDO_FINANCEIRO' }),
-      pedidosApi.listar({ status: 'FINANCEIRO_APROVADO' }),
+      // Registro permanente: todo pedido que o Financeiro já liberou, mesmo
+      // que já tenha avançado na produção/expedição — fica aqui como
+      // controle do próprio funcionário.
+      pedidosApi.listar({ liberadoFinanceiro: 'true' }),
     ]).then(([a, b]) => {
       setAguardando(a.data)
       setLiberados(b.data)
@@ -31,12 +34,15 @@ export default function PainelFinanceiro() {
     [aguardando, liberados],
   )
 
-  function LinhaPedido({ p, cor, destaqueObs }: { p: Pedido; cor: string; destaqueObs?: boolean }) {
+  function LinhaPedido({ p, cor, destaqueObs, mostrarStatus }: { p: Pedido; cor: string; destaqueObs?: boolean; mostrarStatus?: boolean }) {
     return (
       <div className={`flex items-start justify-between gap-4 p-4 border rounded-xl ${cor}`}>
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-semibold text-blue-600">#{p.numero}</span>
+            {mostrarStatus && (
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_PEDIDO_COR[p.status]}`}>{STATUS_PEDIDO_LABEL[p.status]}</span>
+            )}
             {p.aguardandoSinal && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">⏳ Aguardando sinal</span>}
             {p.financeiroLiberadoEm && <span className="text-xs text-blue-600">liberado em {formatarData(p.financeiroLiberadoEm)}</span>}
           </div>
@@ -115,11 +121,14 @@ export default function PainelFinanceiro() {
         </div>
       ) : (
         <div className="card">
-          <p className="text-sm text-gray-500 mb-4">Já liberados para a produção. Você ainda pode abrir e ajustar os campos e a observação.</p>
+          <p className="text-sm text-gray-500 mb-4">
+            Registro de todo pedido já liberado por você — fica aqui mesmo depois de avançar na produção,
+            expedição ou entrega, para seu controle. Você ainda pode abrir e ajustar os campos e a observação.
+          </p>
           {liberados.length === 0 ? (
             <p className="text-center py-8 text-gray-500">Nenhum pedido liberado ainda.</p>
           ) : (
-            <div className="space-y-3">{liberados.map((p) => <LinhaPedido key={p.id} p={p} cor="border-blue-200 bg-blue-50" />)}</div>
+            <div className="space-y-3">{liberados.map((p) => <LinhaPedido key={p.id} p={p} cor="border-blue-200 bg-blue-50" mostrarStatus />)}</div>
           )}
         </div>
       )}
