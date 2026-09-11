@@ -65,14 +65,18 @@ export async function buscar(req: AuthRequest, res: Response) {
   })
   if (!os) return res.status(404).json({ erro: 'O.S. não encontrada' })
 
-  // Na Ordem de Pedido só o documento "Pedido Gerado Produção" aparece — é
-  // esse o único relevante para a produção acompanhar o trabalho. Pedido
-  // Gerado, Pedido Assinado e o Comprovante de Sinal ficam só no Pedido
-  // (para quem tem acesso comercial/financeiro), não aqui.
+  // Na Ordem de Pedido, o chão de fábrica (Produção, Projetos e Desenhos,
+  // Almoxarifado) só acessa o "Pedido Gerado Produção" — os outros dois
+  // documentos são comerciais e não dizem respeito a esse trabalho. Todo o
+  // resto (Financeiro, Admin, Diretor, Gestão, Gerente de Produção, Vendas
+  // etc.) continua vendo os 3 documentos normalmente.
+  const role = req.usuario!.role
+  const apenasProducao = ['PRODUCAO', 'PROJETISTA', 'ALMOXARIFE'].includes(role)
+  const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role)
   const pedido = {
     ...os.pedido,
-    fotos: os.pedido.fotos.filter((f) => f.descricao === 'Pedido Gerado Produção'),
-    comprovanteSinal: null,
+    fotos: apenasProducao ? os.pedido.fotos.filter((f) => f.descricao === 'Pedido Gerado Produção') : os.pedido.fotos,
+    comprovanteSinal: comprovanteVisivel ? os.pedido.comprovanteSinal : null,
   }
 
   return res.json({ ...os, pedido })
