@@ -110,12 +110,12 @@ export default function DetalheOS() {
   if (loading) return <div className="text-center py-8 text-gray-500">Carregando...</div>
   if (!os) return <div className="text-center py-8 text-red-500">Ordem de Pedido não encontrada</div>
 
-  const podeDistribuir = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'GESTOR_PRODUCAO')
+  const podeDistribuir = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO')
   // Funcionário de produção (chão de fábrica) não precisa ver/mexer na
   // distribuição entre setores — só quem coordena isso.
-  const podeVerEntrega = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'GESTOR_PRODUCAO', 'ALMOXARIFE')
+  const podeVerEntrega = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'ALMOXARIFE')
   const podeEditarEntrega = podeVerEntrega
-  const podeAtualizarStatus = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'PRODUCAO', 'ALMOXARIFE')
+  const podeAtualizarStatus = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'PRODUCAO', 'ALMOXARIFE')
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

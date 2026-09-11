@@ -60,10 +60,10 @@ export default function DetalhePedido() {
   const [erroPrazo, setErroPrazo] = useState('')
   const [salvandoErro, setSalvandoErro] = useState(false)
 
-  const podeMexerComprovante = hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL', 'FINANCEIRO')
-  const podeRevisarFinanceiro = hasRole('FINANCEIRO', 'ADMIN', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL')
-  const podeMexerAmostra = hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO')
-  const podeConferirGerente = hasRole('GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'ADMIN', 'GESTOR_ADMIN')
+  const podeMexerComprovante = hasRole('VENDEDOR', 'ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'FINANCEIRO')
+  const podeRevisarFinanceiro = hasRole('FINANCEIRO', 'ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL')
+  const podeMexerAmostra = hasRole('VENDEDOR', 'ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO')
+  const podeConferirGerente = hasRole('GERENTE_OPERACIONAL', 'GESTOR_PRODUCAO', 'ADMIN', 'DIRETOR', 'GESTOR_ADMIN')
 
   async function salvarComprovante() {
     if (!comprovanteFile) return
@@ -247,7 +247,7 @@ export default function DetalhePedido() {
             {pedido.erroPedidoEm && <> em {formatarData(pedido.erroPedidoEm)}</>}
             {pedido.erroPedidoPrazo && <> · prazo para correção: <strong>{formatarData(pedido.erroPedidoPrazo)}</strong></>}
           </p>
-          {hasRole('VENDEDOR', 'ADMIN', 'GESTOR_ADMIN') && (
+          {hasRole('VENDEDOR', 'ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO') && (
             <button onClick={resolverErro} className="btn-success mt-3">✅ Marcar como corrigido</button>
           )}
         </div>

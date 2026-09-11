@@ -30,7 +30,7 @@ export default function ListaCompras() {
     <div className="space-y-4">
       <PageHeader
         title="Compras"
-        actions={hasRole('ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL', 'COMPRADOR', 'PRODUCAO') && (
+        actions={hasRole('ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'ALMOXARIFE', 'GERENTE_OPERACIONAL', 'COMPRADOR', 'PRODUCAO') && (
           <Link to="/compras/nova" className="btn-primary">+ Solicitar Compra</Link>
         )}
       />
@@ -73,7 +73,7 @@ export default function ListaCompras() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      {!c.ciencia && hasRole('COMPRADOR', 'ADMIN', 'GERENTE_OPERACIONAL') && (
+                      {!c.ciencia && hasRole('COMPRADOR', 'ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL') && (
                         <button className="btn-secondary text-xs" onClick={() => marcarCiente(c.id)}>Marcar Ciente</button>
                       )}
                       <Link to={`/compras/${c.id}`} className="text-blue-600 hover:underline text-xs">Detalhes</Link>

@@ -53,7 +53,7 @@ export default function ListaEstoque() {
       <PageHeader
         title="Almoxarifado"
         subtitle="Pedidos liberados para o setor e controle de estoque"
-        actions={aba === 'estoque' && hasRole('ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL') && (
+        actions={aba === 'estoque' && hasRole('ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'ALMOXARIFE', 'GERENTE_OPERACIONAL') && (
           <button className="btn-primary" onClick={() => setModalCriar(true)}>+ Novo Item</button>
         )}
       />

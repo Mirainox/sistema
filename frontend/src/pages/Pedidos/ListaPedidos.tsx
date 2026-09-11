@@ -24,7 +24,7 @@ export default function ListaPedidos() {
     setLoading(false)
   }
 
-  const podeCriar = hasRole('ADMIN', 'GESTOR_ADMIN', 'VENDEDOR')
+  const podeCriar = hasRole('ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'VENDEDOR')
 
   return (
     <div className="space-y-4">

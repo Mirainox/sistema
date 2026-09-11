@@ -9,22 +9,26 @@ interface MenuItem {
   roles?: string[]
 }
 
+// Claudiomir (Diretor), Mayara (Gestora Admin) e Sérgio (Gestor de Produção)
+// têm acesso total ao sistema, igual ao Admin — entram em todos os menus.
+const LIDERANCA = ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL']
+
 const menuItems: MenuItem[] = [
   { label: 'Dashboard', path: '/', icon: '📊' },
-  { label: 'Pedidos', path: '/pedidos', icon: '📋', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'VENDEDOR', 'FINANCEIRO', 'PROJETISTA'] },
-  { label: 'Ordem de Pedido', path: '/os', icon: '⚙️', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'FINANCEIRO', 'VENDEDOR', 'PRODUCAO', 'ALMOXARIFE', 'PROJETISTA'] },
-  { label: 'Compras', path: '/compras', icon: '🛒', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'COMPRADOR', 'GERENTE_OPERACIONAL', 'ALMOXARIFE', 'PRODUCAO'] },
-  { label: 'Almoxarifado', path: '/estoque', icon: '📦', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL'] },
-  { label: 'Produção', path: '/producao', icon: '🏭', roles: ['ADMIN', 'DIRETOR', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PRODUCAO', 'ALMOXARIFE', 'PROJETISTA'] },
-  { label: 'Projetos e Desenhos', path: '/projetos', icon: '🎨', roles: ['ADMIN', 'DIRETOR', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'PROJETISTA', 'ALMOXARIFE'] },
+  { label: 'Pedidos', path: '/pedidos', icon: '📋', roles: [...LIDERANCA, 'VENDEDOR', 'FINANCEIRO', 'PROJETISTA'] },
+  { label: 'Ordem de Pedido', path: '/os', icon: '⚙️', roles: [...LIDERANCA, 'FINANCEIRO', 'VENDEDOR', 'PRODUCAO', 'ALMOXARIFE', 'PROJETISTA'] },
+  { label: 'Compras', path: '/compras', icon: '🛒', roles: [...LIDERANCA, 'COMPRADOR', 'ALMOXARIFE', 'PRODUCAO'] },
+  { label: 'Almoxarifado', path: '/estoque', icon: '📦', roles: [...LIDERANCA, 'ALMOXARIFE'] },
+  { label: 'Produção', path: '/producao', icon: '🏭', roles: [...LIDERANCA, 'PRODUCAO', 'ALMOXARIFE', 'PROJETISTA'] },
+  { label: 'Projetos e Desenhos', path: '/projetos', icon: '🎨', roles: [...LIDERANCA, 'PROJETISTA', 'ALMOXARIFE'] },
   { label: 'Checklists', path: '/checklists', icon: '✅' },
-  { label: 'O.S. (Manutenção)', path: '/manutencao', icon: '🔧', roles: ['ADMIN', 'DIRETOR', 'GERENTE_OPERACIONAL', 'MANUTENCAO', 'LOJA_PECAS', 'PRODUCAO'] },
-  { label: 'Expedição', path: '/expedicao', icon: '🚚', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL', 'EXPEDICAO'] },
-  { label: 'Entregas do Mês', path: '/entregas', icon: '🏁', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'GERENTE_OPERACIONAL', 'EXPEDICAO'] },
-  { label: 'Financeiro', path: '/financeiro', icon: '💰', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'FINANCEIRO', 'GERENTE_OPERACIONAL'] },
-  { label: 'Fiscal', path: '/fiscal', icon: '🧾', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'FISCAL', 'GERENTE_OPERACIONAL'] },
-  { label: 'RH / EPIs', path: '/rh', icon: '👷', roles: ['ADMIN', 'DIRETOR', 'RH', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL'] },
-  { label: 'Usuários', path: '/usuarios', icon: '👥', roles: ['ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GERENTE_OPERACIONAL'] },
+  { label: 'O.S. (Manutenção)', path: '/manutencao', icon: '🔧', roles: [...LIDERANCA, 'MANUTENCAO', 'LOJA_PECAS', 'PRODUCAO'] },
+  { label: 'Expedição', path: '/expedicao', icon: '🚚', roles: [...LIDERANCA, 'EXPEDICAO'] },
+  { label: 'Entregas do Mês', path: '/entregas', icon: '🏁', roles: [...LIDERANCA, 'EXPEDICAO'] },
+  { label: 'Financeiro', path: '/financeiro', icon: '💰', roles: [...LIDERANCA, 'FINANCEIRO'] },
+  { label: 'Fiscal', path: '/fiscal', icon: '🧾', roles: [...LIDERANCA, 'FISCAL'] },
+  { label: 'RH / EPIs', path: '/rh', icon: '👷', roles: [...LIDERANCA, 'RH'] },
+  { label: 'Usuários', path: '/usuarios', icon: '👥', roles: [...LIDERANCA] },
 ]
 
 export default function Sidebar() {

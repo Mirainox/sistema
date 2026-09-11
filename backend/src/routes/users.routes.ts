@@ -6,9 +6,9 @@ const router = Router()
 router.use(autenticar)
 router.get('/', listar)
 router.get('/:id', buscar)
-router.post('/', autorizar('ADMIN', 'GESTOR_ADMIN'), criar)
-router.put('/:id', autorizar('ADMIN', 'GESTOR_ADMIN'), atualizar)
-router.delete('/:id', autorizar('ADMIN'), desativar)
-router.post('/:id/resetar-senha', autorizar('ADMIN'), resetarSenha)
+router.post('/', autorizar('ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO'), criar)
+router.put('/:id', autorizar('ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO'), atualizar)
+router.delete('/:id', autorizar('ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO'), desativar)
+router.post('/:id/resetar-senha', autorizar('ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO'), resetarSenha)
 
 export default router

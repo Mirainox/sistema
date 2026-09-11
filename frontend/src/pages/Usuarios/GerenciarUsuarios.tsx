@@ -7,7 +7,7 @@ import PageHeader from '../../components/PageHeader'
 
 export default function GerenciarUsuarios() {
   const { hasRole } = useAuth()
-  const souAdmin = hasRole('ADMIN')
+  const souAdmin = hasRole('ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO')
   const [usuarios, setUsuarios] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
