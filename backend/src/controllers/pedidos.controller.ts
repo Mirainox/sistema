@@ -368,9 +368,14 @@ export async function listarProjetos(req: AuthRequest, res: Response) {
     orderBy: { createdAt: 'desc' },
   })
 
+  // Nesta área só o documento "Pedido Gerado Produção" (e anexos de desenho)
+  // ficam disponíveis — Pedido Gerado, Pedido Assinado e Comprovante de Sinal
+  // não são do setor de Projetos e Desenhos.
+  const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role)
   const out = pedidos.map((p) => ({
     ...p,
     fotos: p.fotos.filter((f) => podeVer(role, f.visivelPara)),
+    comprovanteSinal: comprovanteVisivel ? p.comprovanteSinal : null,
   }))
   return res.json(out)
 }
@@ -404,9 +409,14 @@ export async function listarAlmoxarifado(req: AuthRequest, res: Response) {
     orderBy: { createdAt: 'desc' },
   })
 
+  // Mesma regra: só "Pedido Gerado Produção" (e anexos vinculados ao setor)
+  // ficam visíveis para o Almoxarifado — não Pedido Gerado, Pedido Assinado
+  // ou o Comprovante de Sinal.
+  const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role)
   const out = pedidos.map((p) => ({
     ...p,
     fotos: p.fotos.filter((f) => podeVer(role, f.visivelPara)),
+    comprovanteSinal: comprovanteVisivel ? p.comprovanteSinal : null,
   }))
   return res.json(out)
 }
