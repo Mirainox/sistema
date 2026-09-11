@@ -12,7 +12,7 @@ function gerarNumeroPedido() {
   return `PED-${ano}-${seq}`
 }
 
-export async function listar(req: Request, res: Response) {
+export async function listar(req: AuthRequest, res: Response) {
   const { status, search } = req.query
   const where: any = {}
   if (status) where.status = status
@@ -30,7 +30,11 @@ export async function listar(req: Request, res: Response) {
     include: { cliente: true, vendedor: { select: { nome: true } } },
     orderBy: { createdAt: 'desc' },
   })
-  return res.json(pedidos)
+
+  const role = req.usuario!.role
+  const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role)
+  const out = comprovanteVisivel ? pedidos : pedidos.map((p) => ({ ...p, comprovanteSinal: null }))
+  return res.json(out)
 }
 
 export async function buscar(req: AuthRequest, res: Response) {

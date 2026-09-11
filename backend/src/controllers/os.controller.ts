@@ -37,7 +37,11 @@ export async function listar(req: AuthRequest, res: Response) {
     },
     orderBy: { createdAt: 'desc' },
   })
-  return res.json(os)
+
+  const role = req.usuario!.role
+  const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role)
+  const out = comprovanteVisivel ? os : os.map((o) => ({ ...o, pedido: { ...o.pedido, comprovanteSinal: null } }))
+  return res.json(out)
 }
 
 export async function buscar(req: AuthRequest, res: Response) {
