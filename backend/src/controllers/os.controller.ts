@@ -152,9 +152,32 @@ export async function atualizarSetor(req: AuthRequest, res: Response) {
   return res.json(setor)
 }
 
-export async function atualizarStatus(req: Request, res: Response) {
+// Status "iniciais" do pedido — ainda não chegaram em produção finalizada.
+const STATUS_PEDIDO_ANTES_DE_FINALIZAR = ['AGUARDANDO_FINANCEIRO', 'AGUARDANDO_CORRECAO', 'FINANCEIRO_APROVADO', 'EM_PRODUCAO']
+
+export async function atualizarStatus(req: AuthRequest, res: Response) {
   const { id } = req.params
   const { status } = req.body
-  const os = await prisma.oS.update({ where: { id }, data: { status } })
+  const os = await prisma.oS.update({ where: { id }, data: { status }, include: { pedido: true } })
+
+  // Quando a Ordem de Pedido é concluída na produção, o Pedido acompanha:
+  // avança para Aguardando Expedição e entra em "Entregas do Mês" como
+  // finalizada pela produção (se ainda não tiver uma fase de entrega definida).
+  if (status === 'CONCLUIDA') {
+    const pedido = os.pedido
+    const data: Record<string, unknown> = {}
+    if (STATUS_PEDIDO_ANTES_DE_FINALIZAR.includes(pedido.status)) {
+      data.status = 'AGUARDANDO_EXPEDICAO'
+    }
+    if (!pedido.faseEntrega) {
+      data.faseEntrega = 'PRODUCAO_FINALIZADA'
+      data.faseEntregaPor = req.usuario?.nome || 'Produção'
+      data.faseEntregaEm = new Date()
+    }
+    if (Object.keys(data).length > 0) {
+      await prisma.pedido.update({ where: { id: pedido.id }, data })
+    }
+  }
+
   return res.json(os)
 }
