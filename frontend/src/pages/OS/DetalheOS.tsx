@@ -125,6 +125,20 @@ export default function DetalheOS() {
         }
       />
 
+      {os.pedido.fotos && os.pedido.fotos.length > 0 && (
+        <div className="card border-blue-200 bg-blue-50/40">
+          <h2 className="section-title">📎 Documentos do pedido</h2>
+          <div className="space-y-2">
+            {os.pedido.fotos.map((f) => (
+              <a key={f.id} href={f.url} target="_blank" rel="noreferrer" className="doc-row">
+                <span className="font-medium text-sm">{f.descricao || 'Documento'}</span>
+                <span className="text-xs text-blue-600">Abrir →</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card">
           <h2 className="section-title">Identificação obrigatória</h2>
@@ -146,20 +160,6 @@ export default function DetalheOS() {
           </div>
         </div>
       </div>
-
-      {os.pedido.fotos && os.pedido.fotos.length > 0 && (
-        <div className="card">
-          <h2 className="section-title">📎 Documentos do pedido</h2>
-          <div className="space-y-2">
-            {os.pedido.fotos.map((f) => (
-              <a key={f.id} href={f.url} target="_blank" rel="noreferrer" className="doc-row">
-                <span className="font-medium text-sm">{f.descricao || 'Documento'}</span>
-                <span className="text-xs text-blue-600">Abrir →</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="card">
         <h2 className="section-title">Entrega por setor (papel e sistema)</h2>

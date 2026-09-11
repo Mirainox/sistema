@@ -120,7 +120,7 @@ export default function PainelProducao() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <button className="btn-primary text-xs" onClick={() => setFotoModal(os)}>📸 Enviar Foto</button>
-                      <Link to={`/os/${os.id}`} className="btn-secondary text-xs text-center">Ver Ordem de Pedido</Link>
+                      <Link to={`/os/${os.id}`} className="btn-secondary text-xs text-center">Ver Pedido</Link>
                     </div>
                   </div>
                 </div>
