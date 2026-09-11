@@ -9,7 +9,7 @@ function gerarNumeroOS() {
   return `OS-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`
 }
 
-export async function listar(req: Request, res: Response) {
+export async function listar(req: AuthRequest, res: Response) {
   const { status, search } = req.query
   const where: any = {}
   if (status) where.status = status
@@ -19,6 +19,13 @@ export async function listar(req: Request, res: Response) {
       { pedido: { numero: { contains: String(search), mode: 'insensitive' } } },
       { pedido: { cliente: { nome: { contains: String(search), mode: 'insensitive' } } } },
     ]
+  }
+
+  // Funcionário de chão de fábrica só vê a Ordem de Pedido depois que o
+  // Wellington distribuiu para o setor dele — evita a área de trabalho lotar
+  // com pedidos que não são daquele setor.
+  if (req.usuario!.role === 'PRODUCAO') {
+    where.setoresOS = { some: { setor: req.usuario!.setor } }
   }
 
   const os = await prisma.oS.findMany({
