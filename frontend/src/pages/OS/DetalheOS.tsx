@@ -147,6 +147,20 @@ export default function DetalheOS() {
         </div>
       </div>
 
+      {os.pedido.fotos && os.pedido.fotos.length > 0 && (
+        <div className="card">
+          <h2 className="section-title">📎 Documentos do pedido</h2>
+          <div className="space-y-2">
+            {os.pedido.fotos.map((f) => (
+              <a key={f.id} href={f.url} target="_blank" rel="noreferrer" className="doc-row">
+                <span className="font-medium text-sm">{f.descricao || 'Documento'}</span>
+                <span className="text-xs text-blue-600">Abrir →</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="card">
         <h2 className="section-title">Entrega por setor (papel e sistema)</h2>
         {os.setoresOS.length === 0 ? (

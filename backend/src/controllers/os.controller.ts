@@ -3,6 +3,7 @@ import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
 import { notificarPorRole } from '../services/notificacao.service'
 import { garantirExpedicao } from '../services/expedicao.service'
+import { podeVer, podeVerTudo, SETORES_PEDIDO_ADMINISTRATIVO } from '../utils/visibilidade'
 
 function gerarNumeroOS() {
   return `OS-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`
@@ -32,12 +33,18 @@ export async function listar(req: Request, res: Response) {
   return res.json(os)
 }
 
-export async function buscar(req: Request, res: Response) {
+export async function buscar(req: AuthRequest, res: Response) {
   const { id } = req.params
   const os = await prisma.oS.findUnique({
     where: { id },
     include: {
-      pedido: { include: { cliente: true, vendedor: { select: { nome: true } } } },
+      pedido: {
+        include: {
+          cliente: true,
+          vendedor: { select: { nome: true } },
+          fotos: { include: { usuario: { select: { nome: true } } }, orderBy: { createdAt: 'desc' } },
+        },
+      },
       distribuidor: { select: { nome: true } },
       setoresOS: true,
       checklists: { include: { itens: true, respostas: true } },
@@ -46,7 +53,19 @@ export async function buscar(req: Request, res: Response) {
     },
   })
   if (!os) return res.status(404).json({ erro: 'O.S. não encontrada' })
-  return res.json(os)
+
+  // Na Ordem de Pedido, a produção só acessa o documento "Pedido Gerado
+  // Produção" — Pedido Gerado, Pedido Assinado e o Comprovante de Sinal não
+  // são do setor de produção.
+  const role = req.usuario!.role
+  const comprovanteVisivel = podeVerTudo(role) || SETORES_PEDIDO_ADMINISTRATIVO.includes(role)
+  const pedido = {
+    ...os.pedido,
+    fotos: os.pedido.fotos.filter((f) => podeVer(role, f.visivelPara)),
+    comprovanteSinal: comprovanteVisivel ? os.pedido.comprovanteSinal : null,
+  }
+
+  return res.json({ ...os, pedido })
 }
 
 export async function gerar(req: AuthRequest, res: Response) {
