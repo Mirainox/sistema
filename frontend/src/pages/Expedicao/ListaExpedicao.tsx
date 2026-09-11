@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { expedicaoApi } from '../../api'
 import { formatarData } from '../../utils/formatters'
 import PageHeader from '../../components/PageHeader'
@@ -59,7 +60,9 @@ export default function ListaExpedicao() {
               ) : (
                 lista.map((e) => (
                   <tr key={e.id} className="hover:bg-gray-50">
-                    <td className="py-3 font-medium">#{e.numeroPedido}</td>
+                    <td className="py-3 font-medium">
+                      {e.pedidoId ? <Link to={`/pedidos/${e.pedidoId}`} className="text-blue-600 hover:underline">#{e.numeroPedido}</Link> : `#${e.numeroPedido}`}
+                    </td>
                     <td className="py-3">{e.nomeCliente}</td>
                     <td className="py-3 text-gray-600">{e.cidadeCliente}/{e.estado}</td>
                     <td className="py-3">{e.equipamento}</td>

@@ -3,6 +3,7 @@ import { Role } from '@prisma/client'
 import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
 import { notificarPorRole, criarNotificacao } from '../services/notificacao.service'
+import { garantirExpedicao } from '../services/expedicao.service'
 import { podeVer, podeVerTudo, SETORES_PEDIDO_ADMINISTRATIVO, SETORES_PEDIDO_PRODUCAO } from '../utils/visibilidade'
 
 function gerarNumeroPedido() {
@@ -573,6 +574,11 @@ export async function atualizarFaseEntrega(req: AuthRequest, res: Response) {
   if (!limpa && STATUS_POR_FASE[faseEntrega]) data.status = STATUS_POR_FASE[faseEntrega] as any
 
   const pedido = await prisma.pedido.update({ where: { id }, data })
+
+  // A partir de "finalizada pela produção" o pedido deve aparecer na Área de
+  // Trabalho da Expedição.
+  if (!limpa) await garantirExpedicao(pedido.id)
+
   return res.json(pedido)
 }
 

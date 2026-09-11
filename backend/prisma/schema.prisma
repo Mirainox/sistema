@@ -250,6 +250,7 @@ model Pedido {
   os           OS[]
   notificacoes Notificacao[]
   fotos        Foto[]
+  expedicao    Expedicao?
 }
 
 model OS {
@@ -443,6 +444,8 @@ model Manutencao {
 
 model Expedicao {
   id              String   @id @default(cuid())
+  pedidoId        String?  @unique
+  pedido          Pedido?  @relation(fields: [pedidoId], references: [id])
   numeroPedido    String
   nomeCliente     String
   cidadeCliente   String

@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
 import { notificarPorRole } from '../services/notificacao.service'
+import { garantirExpedicao } from '../services/expedicao.service'
 
 function gerarNumeroOS() {
   return `OS-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`
@@ -177,6 +178,8 @@ export async function atualizarStatus(req: AuthRequest, res: Response) {
     if (Object.keys(data).length > 0) {
       await prisma.pedido.update({ where: { id: pedido.id }, data })
     }
+    // Faz o pedido aparecer sozinho na Área de Trabalho da Expedição.
+    await garantirExpedicao(pedido.id)
   }
 
   return res.json(os)
