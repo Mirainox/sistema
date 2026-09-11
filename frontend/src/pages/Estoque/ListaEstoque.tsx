@@ -3,9 +3,11 @@ import { estoqueApi } from '../../api'
 import { Estoque } from '../../types'
 import { useAuth } from '../../contexts/AuthContext'
 import PageHeader from '../../components/PageHeader'
+import AlmoxarifadoPedidos from './AlmoxarifadoPedidos'
 
 export default function ListaEstoque() {
   const { hasRole } = useAuth()
+  const [aba, setAba] = useState<'pedidos' | 'estoque'>('pedidos')
   const [itens, setItens] = useState<Estoque[]>([])
   const [loading, setLoading] = useState(true)
   const [tipoFiltro, setTipoFiltro] = useState('')
@@ -50,11 +52,24 @@ export default function ListaEstoque() {
     <div className="space-y-4">
       <PageHeader
         title="Almoxarifado"
-        actions={hasRole('ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL') && (
+        subtitle="Pedidos liberados para o setor e controle de estoque"
+        actions={aba === 'estoque' && hasRole('ADMIN', 'ALMOXARIFE', 'GERENTE_OPERACIONAL') && (
           <button className="btn-primary" onClick={() => setModalCriar(true)}>+ Novo Item</button>
         )}
       />
 
+      <div className="flex gap-2">
+        <button onClick={() => setAba('pedidos')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${aba === 'pedidos' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}>
+          📋 Pedidos
+        </button>
+        <button onClick={() => setAba('estoque')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${aba === 'estoque' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}>
+          📦 Estoque
+        </button>
+      </div>
+
+      {aba === 'pedidos' && <AlmoxarifadoPedidos />}
+
+      {aba === 'estoque' && (
       <div className="card">
         <div className="flex gap-4 mb-4">
           <input className="input flex-1" placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && carregar()} />
@@ -104,6 +119,7 @@ export default function ListaEstoque() {
           </table>
         )}
       </div>
+      )}
 
       {modalMovimentar && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

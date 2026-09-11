@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { listar, listarProjetos, listarEntregas, buscar, criar, atualizar, atualizarStatus, atualizarComprovante, atualizarAmostra, confirmarChecklist, revisarFinanceiro, conferenciaGerente, marcarDesenhoEtapa, anexarDesenho, atualizarFaseEntrega, marcarErro } from '../controllers/pedidos.controller'
+import { listar, listarProjetos, listarAlmoxarifado, listarEntregas, buscar, criar, atualizar, atualizarStatus, atualizarComprovante, atualizarAmostra, confirmarChecklist, revisarFinanceiro, conferenciaGerente, marcarDesenhoEtapa, anexarDesenho, atualizarFaseEntrega, marcarErro } from '../controllers/pedidos.controller'
 import { autenticar } from '../middleware/auth'
 import { upload } from '../middleware/upload'
 
@@ -7,6 +7,7 @@ const router = Router()
 router.use(autenticar)
 router.get('/', listar)
 router.get('/projetos', listarProjetos)
+router.get('/almoxarifado', listarAlmoxarifado)
 router.get('/entregas', listarEntregas)
 router.get('/:id', buscar)
 router.post(

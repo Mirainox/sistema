@@ -375,6 +375,42 @@ export async function listarProjetos(req: AuthRequest, res: Response) {
   return res.json(out)
 }
 
+// Área de Trabalho do Almoxarifado (Carlos, Matheus, João Vitor): todo pedido
+// que já foi liberado por todo mundo e chegou à produção (Ordem de Pedido
+// gerada) aparece aqui sozinho — não depende de o gerente já ter distribuído
+// aos setores. Quando a distribuição acontece, o recebimento (papel/sistema,
+// pessoa, pendências) fica editável direto nesta tela.
+const SETORES_ALMOXARIFADO = ['ALMOXARIFADO_GERAL', 'ALMOXARIFADO_CONSUMIVEIS']
+
+export async function listarAlmoxarifado(req: AuthRequest, res: Response) {
+  const role = req.usuario!.role
+  const pedidos = await prisma.pedido.findMany({
+    where: {
+      status: { notIn: ['CANCELADO'] },
+      os: { some: {} },
+    },
+    include: {
+      cliente: true,
+      vendedor: { select: { nome: true } },
+      fotos: { include: { usuario: { select: { nome: true } } }, orderBy: { createdAt: 'desc' } },
+      os: {
+        select: {
+          id: true,
+          numero: true,
+          setoresOS: { where: { setor: { in: SETORES_ALMOXARIFADO as any } } },
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  const out = pedidos.map((p) => ({
+    ...p,
+    fotos: p.fotos.filter((f) => podeVer(role, f.visivelPara)),
+  }))
+  return res.json(out)
+}
+
 // Mini checklist do William (Projetos e Desenhos): 3 etapas, cada uma registra
 // automaticamente quem marcou + data + hora (padrão da Distribuição).
 export async function marcarDesenhoEtapa(req: AuthRequest, res: Response) {
