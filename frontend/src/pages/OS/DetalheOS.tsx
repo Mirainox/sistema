@@ -111,7 +111,10 @@ export default function DetalheOS() {
   if (!os) return <div className="text-center py-8 text-red-500">Ordem de Pedido não encontrada</div>
 
   const podeDistribuir = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'GESTOR_PRODUCAO')
-  const podeEditarEntrega = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'GESTOR_PRODUCAO', 'PRODUCAO', 'ALMOXARIFE')
+  // Funcionário de produção (chão de fábrica) não precisa ver/mexer na
+  // distribuição entre setores — só quem coordena isso.
+  const podeVerEntrega = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'GESTOR_PRODUCAO', 'ALMOXARIFE')
+  const podeEditarEntrega = podeVerEntrega
   const podeAtualizarStatus = hasRole('GERENTE_OPERACIONAL', 'ADMIN', 'PRODUCAO', 'ALMOXARIFE')
 
   return (
@@ -161,18 +164,20 @@ export default function DetalheOS() {
         </div>
       </div>
 
-      <div className="card">
-        <h2 className="section-title">Entrega por setor (papel e sistema)</h2>
-        {os.setoresOS.length === 0 ? (
-          <p className="text-sm text-gray-500">Ainda não distribuída aos setores.</p>
-        ) : (
-          <div className="space-y-2">
-            {os.setoresOS.map((s) => (
-              <SetorEntrega key={s.id} osId={os.id} s={s} podeEditar={podeEditarEntrega} onSalvo={carregarOS} />
-            ))}
-          </div>
-        )}
-      </div>
+      {podeVerEntrega && (
+        <div className="card">
+          <h2 className="section-title">Entrega por setor (papel e sistema)</h2>
+          {os.setoresOS.length === 0 ? (
+            <p className="text-sm text-gray-500">Ainda não distribuída aos setores.</p>
+          ) : (
+            <div className="space-y-2">
+              {os.setoresOS.map((s) => (
+                <SetorEntrega key={s.id} osId={os.id} s={s} podeEditar={podeEditarEntrega} onSalvo={carregarOS} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {podeDistribuir && os.status === 'GERADA' && (
         <div className="card">
