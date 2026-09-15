@@ -1,7 +1,6 @@
 import { Request, Response } from 'express'
 import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
-import { lerAnexoMulter } from '../services/ia.service'
 
 export async function upload(req: AuthRequest, res: Response) {
   if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' })
@@ -22,11 +21,6 @@ export async function upload(req: AuthRequest, res: Response) {
       checklistId: checklistId || undefined,
     },
   })
-
-  // Leitura automática pela IA, em segundo plano.
-  lerAnexoMulter(req.file)
-    .then((dados) => dados && prisma.foto.update({ where: { id: foto.id }, data: { dadosExtraidos: dados as any } }))
-    .catch((err) => console.error('[ia] falha ao ler foto:', err))
 
   return res.status(201).json(foto)
 }

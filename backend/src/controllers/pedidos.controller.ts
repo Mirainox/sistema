@@ -4,7 +4,7 @@ import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
 import { notificarPorRole, criarNotificacao } from '../services/notificacao.service'
 import { garantirExpedicao } from '../services/expedicao.service'
-import { lerAnexoMulter } from '../services/ia.service'
+import { lerDocumentoPedido } from '../services/ia.service'
 import { podeVer, podeVerTudo, SETORES_PEDIDO_ADMINISTRATIVO, SETORES_PEDIDO_PRODUCAO } from '../utils/visibilidade'
 
 function gerarNumeroPedido() {
@@ -168,26 +168,12 @@ export async function criar(req: AuthRequest, res: Response) {
     fotosCriadas.push({ id: foto.id, arquivo: d.arquivo })
   }
 
-  // Leitura automática pela IA, em segundo plano — não atrasa a resposta ao
-  // vendedor. Cada documento fica com o que a IA leu; o comprovante alimenta
-  // os campos de conferência do Financeiro (como sugestão, não confirmação).
+  // Leitura automática pela IA dos 3 documentos, em segundo plano — não
+  // atrasa a resposta ao vendedor.
   for (const f of fotosCriadas) {
-    lerAnexoMulter(f.arquivo)
+    lerDocumentoPedido(f.arquivo)
       .then((dados) => dados && prisma.foto.update({ where: { id: f.id }, data: { dadosExtraidos: dados as any } }))
       .catch((err) => console.error('[ia] falha ao ler documento do pedido:', err))
-  }
-  if (comprovante) {
-    lerAnexoMulter(comprovante)
-      .then((dados) => dados && prisma.pedido.update({
-        where: { id: pedido.id },
-        data: {
-          compExtraidoValor: dados.valor ?? null,
-          compExtraidoData: dados.dataDocumento ? new Date(dados.dataDocumento) : null,
-          compExtraidoBanco: dados.bancoOuForma ?? null,
-          compExtraidoCliente: dados.nomeCliente ?? null,
-        },
-      }))
-      .catch((err) => console.error('[ia] falha ao ler comprovante do pedido:', err))
   }
 
   await notificarPorRole(
@@ -331,19 +317,6 @@ export async function atualizarComprovante(req: AuthRequest, res: Response) {
       'NOVO_PEDIDO',
       { pedidoId: pedido.id }
     )
-
-    // Leitura automática do comprovante, em segundo plano.
-    lerAnexoMulter(arquivo)
-      .then((dados) => dados && prisma.pedido.update({
-        where: { id: pedido.id },
-        data: {
-          compExtraidoValor: dados.valor ?? null,
-          compExtraidoData: dados.dataDocumento ? new Date(dados.dataDocumento) : null,
-          compExtraidoBanco: dados.bancoOuForma ?? null,
-          compExtraidoCliente: dados.nomeCliente ?? null,
-        },
-      }))
-      .catch((err) => console.error('[ia] falha ao ler comprovante atualizado:', err))
   }
 
   return res.json(pedido)
@@ -537,10 +510,6 @@ export async function anexarDesenho(req: AuthRequest, res: Response) {
     },
     include: { usuario: { select: { nome: true } } },
   })
-
-  lerAnexoMulter(arquivo)
-    .then((dados) => dados && prisma.foto.update({ where: { id: foto.id }, data: { dadosExtraidos: dados as any } }))
-    .catch((err) => console.error('[ia] falha ao ler anexo de desenho:', err))
 
   return res.status(201).json(foto)
 }

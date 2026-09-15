@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
+import { lerFotoPeca } from '../services/ia.service'
 
 export async function listar(req: Request, res: Response) {
   const { tipo, search } = req.query
@@ -30,6 +31,16 @@ export async function buscar(req: Request, res: Response) {
 export async function criar(req: Request, res: Response) {
   const item = await prisma.estoque.create({ data: req.body })
   return res.status(201).json(item)
+}
+
+// Almoxarifado (Carlos, Matheus): tira/anexa uma foto da peça e a IA sugere
+// código, nome, quantidade, valor e unidade — só preenche o formulário, quem
+// confere e salva é o funcionário.
+export async function lerFoto(req: AuthRequest, res: Response) {
+  if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' })
+  const dados = await lerFotoPeca(req.file)
+  if (!dados) return res.json({ codigo: null, nome: null, quantidade: null, valor: null, unidade: null })
+  return res.json(dados)
 }
 
 export async function movimentar(req: AuthRequest, res: Response) {

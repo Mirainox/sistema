@@ -19,7 +19,7 @@ function Chip({ ok, warn, children }: { ok: boolean; warn?: boolean; children: R
 function DocumentoRow({ foto }: { foto: FotoAnexo }) {
   const [aberto, setAberto] = useState(false)
   const d = foto.dadosExtraidos
-  const temDados = !!(d && (d.resumo || d.nomeCliente || d.cidadeCliente || d.equipamento || d.valor != null || d.observacoes))
+  const temDados = !!(d && (d.numeroPedido || d.nomeCliente || d.cidadeCliente || d.telefoneCliente || d.prazoEntrega || d.dataDocumento))
 
   return (
     <div className="border border-gray-100 rounded-lg overflow-hidden">
@@ -36,13 +36,12 @@ function DocumentoRow({ foto }: { foto: FotoAnexo }) {
       </div>
       {aberto && d && (
         <div className="px-3 pb-3 pt-1 text-xs text-gray-600 space-y-1 bg-purple-50/50 border-t border-purple-100">
-          {d.resumo && <p className="italic text-gray-500">{d.resumo}</p>}
+          {d.numeroPedido && <p><span className="text-gray-400">Nº no documento: </span>{d.numeroPedido}</p>}
           {d.nomeCliente && <p><span className="text-gray-400">Cliente: </span>{d.nomeCliente}</p>}
-          {d.cidadeCliente && <p><span className="text-gray-400">Cidade: </span>{d.cidadeCliente}{d.estadoCliente ? `/${d.estadoCliente}` : ''}</p>}
-          {d.equipamento && <p><span className="text-gray-400">Equipamento: </span>{d.equipamento} {d.modelo || ''}</p>}
-          {d.valor != null && <p><span className="text-gray-400">Valor: </span>{formatarMoeda(d.valor)}</p>}
+          {d.cidadeCliente && <p><span className="text-gray-400">Cidade: </span>{d.cidadeCliente}</p>}
+          {d.telefoneCliente && <p><span className="text-gray-400">Telefone: </span>{d.telefoneCliente}</p>}
           {d.prazoEntrega && <p><span className="text-gray-400">Prazo: </span>{formatarData(d.prazoEntrega)}</p>}
-          {d.observacoes && <p><span className="text-gray-400">Obs.: </span>{d.observacoes}</p>}
+          {d.dataDocumento && <p><span className="text-gray-400">Data do documento: </span>{formatarData(d.dataDocumento)}</p>}
         </div>
       )}
     </div>
@@ -389,29 +388,6 @@ export default function DetalhePedido() {
                 Preencha quando houver comprovante anexado.
                 {!pedido.comprovanteSinal && <span className="text-amber-600"> Nenhum comprovante anexado ainda.</span>}
               </p>
-              {(pedido.compExtraidoValor != null || pedido.compExtraidoData || pedido.compExtraidoBanco) && (
-                <div className="flex items-center justify-between gap-3 flex-wrap bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 mb-3 text-xs text-purple-800">
-                  <span>
-                    🤖 A IA leu no comprovante:
-                    {pedido.compExtraidoValor != null && <> {formatarMoeda(pedido.compExtraidoValor)}</>}
-                    {pedido.compExtraidoData && <> · {formatarData(pedido.compExtraidoData)}</>}
-                    {pedido.compExtraidoBanco && <> · {pedido.compExtraidoBanco}</>}
-                    {pedido.compExtraidoCliente && <> · cliente: {pedido.compExtraidoCliente}</>}
-                    {' '}— confira antes de usar.
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (pedido.compExtraidoValor != null) setFCompValor(String(pedido.compExtraidoValor))
-                      if (pedido.compExtraidoData) setFCompData(pedido.compExtraidoData.slice(0, 10))
-                      if (pedido.compExtraidoBanco) setFCompBanco(pedido.compExtraidoBanco)
-                    }}
-                    className="text-xs font-medium bg-purple-600 text-white px-2.5 py-1 rounded-md hover:bg-purple-700 shrink-0"
-                  >
-                    Usar estes valores
-                  </button>
-                </div>
-              )}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="label">Valor do comprovante</label>

@@ -1,20 +1,11 @@
-// O que a IA (Claude) extraiu automaticamente de um documento/foto anexado.
+// O que a IA (Claude) extraiu automaticamente dos 3 documentos do Novo Pedido.
 export interface DadosExtraidosIA {
-  resumo?: string | null
   numeroPedido?: string | null
   nomeCliente?: string | null
   cidadeCliente?: string | null
-  estadoCliente?: string | null
   telefoneCliente?: string | null
-  emailCliente?: string | null
-  equipamento?: string | null
-  modelo?: string | null
-  condicaoPagamento?: string | null
   prazoEntrega?: string | null
-  valor?: number | null
   dataDocumento?: string | null
-  bancoOuForma?: string | null
-  observacoes?: string | null
 }
 
 export interface FotoAnexo {
@@ -187,6 +178,7 @@ export interface Estoque {
   unidade: string
   quantidade: number
   quantidadeMinima: number
+  valorUnitario?: number | null
   localizacao?: string
 }
 

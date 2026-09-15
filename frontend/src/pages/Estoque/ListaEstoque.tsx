@@ -15,7 +15,8 @@ export default function ListaEstoque() {
   const [modalMovimentar, setModalMovimentar] = useState<Estoque | null>(null)
   const [modalCriar, setModalCriar] = useState(false)
   const [movForm, setMovForm] = useState({ tipo: 'ENTRADA', quantidade: '', motivo: '' })
-  const [novoForm, setNovoForm] = useState({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidadeMinima: '' })
+  const [novoForm, setNovoForm] = useState({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '' })
+  const [lendoFoto, setLendoFoto] = useState(false)
 
   useEffect(() => { carregar() }, [tipoFiltro])
 
@@ -35,10 +36,36 @@ export default function ListaEstoque() {
   }
 
   async function criarItem() {
-    await estoqueApi.criar({ ...novoForm, quantidadeMinima: Number(novoForm.quantidadeMinima) })
+    await estoqueApi.criar({
+      ...novoForm,
+      quantidade: Number(novoForm.quantidade) || 0,
+      quantidadeMinima: Number(novoForm.quantidadeMinima) || 0,
+      valorUnitario: novoForm.valorUnitario ? Number(novoForm.valorUnitario) : null,
+    })
     setModalCriar(false)
-    setNovoForm({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidadeMinima: '' })
+    setNovoForm({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '' })
     carregar()
+  }
+
+  async function lerFotoPeca(file: File) {
+    setLendoFoto(true)
+    try {
+      const formData = new FormData()
+      formData.append('arquivo', file)
+      const { data } = await estoqueApi.lerFoto(formData)
+      setNovoForm((p) => ({
+        ...p,
+        codigo: data.codigo || p.codigo,
+        descricao: data.nome || p.descricao,
+        unidade: data.unidade || p.unidade,
+        quantidade: data.quantidade != null ? String(data.quantidade) : p.quantidade,
+        valorUnitario: data.valor != null ? String(data.valor) : p.valorUnitario,
+      }))
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLendoFoto(false)
+    }
   }
 
   const TIPO_LABEL: Record<string, string> = {
@@ -92,6 +119,7 @@ export default function ListaEstoque() {
                 <th className="pb-3 font-semibold text-gray-700">Tipo</th>
                 <th className="pb-3 font-semibold text-gray-700">Quantidade</th>
                 <th className="pb-3 font-semibold text-gray-700">Mínimo</th>
+                <th className="pb-3 font-semibold text-gray-700">Valor unit.</th>
                 <th className="pb-3 font-semibold text-gray-700">Localização</th>
                 <th className="pb-3 font-semibold text-gray-700">Ações</th>
               </tr>
@@ -109,6 +137,7 @@ export default function ListaEstoque() {
                     {item.quantidade <= item.quantidadeMinima && <span className="ml-2 text-xs text-red-500">⚠️ Abaixo do mínimo</span>}
                   </td>
                   <td className="py-3 text-gray-600">{item.quantidadeMinima} {item.unidade}</td>
+                  <td className="py-3 text-gray-600">{item.valorUnitario != null ? `R$ ${item.valorUnitario.toFixed(2)}` : '-'}</td>
                   <td className="py-3 text-gray-600">{item.localizacao || '-'}</td>
                   <td className="py-3">
                     <button className="text-blue-600 hover:underline text-xs" onClick={() => setModalMovimentar(item)}>Movimentar</button>
@@ -144,8 +173,26 @@ export default function ListaEstoque() {
 
       {modalCriar && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-96 space-y-4">
+          <div className="bg-white rounded-xl p-6 w-96 space-y-4 max-h-[90vh] overflow-y-auto">
             <h2 className="font-semibold text-lg">Novo Item de Estoque</h2>
+
+            <div className="border border-purple-200 bg-purple-50/50 rounded-lg p-3 space-y-2">
+              <label className="label">📷 Ler foto da peça (IA)</label>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                className="input text-xs"
+                disabled={lendoFoto}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) lerFotoPeca(file)
+                  e.target.value = ''
+                }}
+              />
+              {lendoFoto && <p className="text-xs text-purple-600">Lendo foto, aguarde...</p>}
+              <p className="text-xs text-gray-500">A IA tenta preencher os campos abaixo automaticamente. Confira tudo antes de salvar.</p>
+            </div>
+
             <div>
               <label className="label">Tipo</label>
               <select className="input" value={novoForm.tipo} onChange={(e) => setNovoForm((p) => ({ ...p, tipo: e.target.value }))}>
@@ -158,7 +205,9 @@ export default function ListaEstoque() {
             <div><label className="label">Código *</label><input className="input" value={novoForm.codigo} onChange={(e) => setNovoForm((p) => ({ ...p, codigo: e.target.value }))} /></div>
             <div><label className="label">Descrição *</label><input className="input" value={novoForm.descricao} onChange={(e) => setNovoForm((p) => ({ ...p, descricao: e.target.value }))} /></div>
             <div><label className="label">Unidade</label><input className="input" value={novoForm.unidade} onChange={(e) => setNovoForm((p) => ({ ...p, unidade: e.target.value }))} /></div>
+            <div><label className="label">Quantidade</label><input className="input" type="number" value={novoForm.quantidade} onChange={(e) => setNovoForm((p) => ({ ...p, quantidade: e.target.value }))} /></div>
             <div><label className="label">Qtd. Mínima</label><input className="input" type="number" value={novoForm.quantidadeMinima} onChange={(e) => setNovoForm((p) => ({ ...p, quantidadeMinima: e.target.value }))} /></div>
+            <div><label className="label">Valor Unitário (R$)</label><input className="input" type="number" step="0.01" value={novoForm.valorUnitario} onChange={(e) => setNovoForm((p) => ({ ...p, valorUnitario: e.target.value }))} /></div>
             <div className="flex gap-2">
               <button className="btn-primary" onClick={criarItem}>Salvar</button>
               <button className="btn-secondary" onClick={() => setModalCriar(false)}>Cancelar</button>

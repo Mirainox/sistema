@@ -100,6 +100,7 @@ export const estoqueApi = {
   atualizar: (id: string, data: any) => api.put(`/estoque/${id}`, data),
   movimentar: (id: string, data: any) => api.post(`/estoque/${id}/movimentar`, data),
   abaixoMinimo: () => api.get('/estoque/alertas/minimo'),
+  lerFoto: (data: FormData) => api.post('/estoque/ler-foto', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
 }
 
 export const checklistsApi = {
