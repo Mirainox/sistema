@@ -13,6 +13,16 @@ function gerarNumeroPedido() {
   return `PED-${ano}-${seq}`
 }
 
+// Novo Pedido: o vendedor anexa um documento e a IA lê na hora, preenchendo
+// número/cliente/cidade/telefone/prazo no formulário — igual ao Almoxarifado.
+// Quem confere e salva é o vendedor.
+export async function lerDocumento(req: AuthRequest, res: Response) {
+  if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' })
+  const dados = await lerDocumentoPedido(req.file)
+  if (!dados) return res.json({ numeroPedido: null, nomeCliente: null, cidadeCliente: null, telefoneCliente: null, prazoEntrega: null, dataDocumento: null })
+  return res.json(dados)
+}
+
 export async function listar(req: AuthRequest, res: Response) {
   const { status, search, liberadoFinanceiro } = req.query
   const where: any = {}
@@ -148,10 +158,24 @@ export async function criar(req: AuthRequest, res: Response) {
     pedidoAssinadoArquivo && { arquivo: pedidoAssinadoArquivo, descricao: 'Pedido Assinado', visivelPara: SETORES_PEDIDO_ADMINISTRATIVO },
   ].filter(Boolean) as { arquivo: Express.Multer.File; descricao: string; visivelPara: Role[] }[]
 
+  // O vendedor já leu cada documento com a IA na hora de anexar (mesmo fluxo
+  // do Almoxarifado) e conferiu os dados antes de enviar — reaproveitamos essa
+  // leitura em vez de chamar a IA de novo.
+  function dadosJaLidos(campo: string): any {
+    if (!data[campo]) return null
+    try { return JSON.parse(data[campo]) } catch { return null }
+  }
+  const documentosComDados = documentos.map((d) => ({
+    ...d,
+    dadosExtraidos: d.descricao === 'Pedido Gerado' ? dadosJaLidos('dadosPedidoGerado')
+      : d.descricao === 'Pedido Gerado Produção' ? dadosJaLidos('dadosPedidoGeradoProducao')
+      : dadosJaLidos('dadosPedidoAssinado'),
+  }))
+
   // Fotos criadas uma a uma (em vez de createMany) para termos o id de cada
   // uma e poder gravar nela o que a IA ler.
   const fotosCriadas: { id: string; arquivo: Express.Multer.File }[] = []
-  for (const d of documentos) {
+  for (const d of documentosComDados) {
     const foto = await prisma.foto.create({
       data: {
         pedidoId: pedido.id,
@@ -163,13 +187,14 @@ export async function criar(req: AuthRequest, res: Response) {
         nomeCliente: cliente.nome,
         cidadeCliente: cliente.cidade,
         visivelPara: d.visivelPara,
+        dadosExtraidos: d.dadosExtraidos ?? undefined,
       },
     })
-    fotosCriadas.push({ id: foto.id, arquivo: d.arquivo })
+    if (!d.dadosExtraidos) fotosCriadas.push({ id: foto.id, arquivo: d.arquivo })
   }
 
-  // Leitura automática pela IA dos 3 documentos, em segundo plano — não
-  // atrasa a resposta ao vendedor.
+  // Documentos que por algum motivo não vieram com leitura prévia (ex.: envio
+  // direto pela API) ainda são lidos em segundo plano, sem atrasar a resposta.
   for (const f of fotosCriadas) {
     lerDocumentoPedido(f.arquivo)
       .then((dados) => dados && prisma.foto.update({ where: { id: f.id }, data: { dadosExtraidos: dados as any } }))

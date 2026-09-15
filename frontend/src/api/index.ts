@@ -21,6 +21,7 @@ export const pedidosApi = {
   listar: (params?: any) => api.get('/pedidos', { params }),
   buscar: (id: string) => api.get(`/pedidos/${id}`),
   criar: (data: FormData) => api.post('/pedidos', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  lerDocumento: (data: FormData) => api.post('/pedidos/ler-documento', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   atualizar: (id: string, data: any) => api.put(`/pedidos/${id}`, data),
   atualizarComprovante: (id: string, data: FormData) =>
     api.patch(`/pedidos/${id}/comprovante`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),

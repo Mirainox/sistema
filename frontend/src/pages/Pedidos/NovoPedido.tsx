@@ -50,6 +50,46 @@ export default function NovoPedido() {
   const [pedidoGeradoProducao, setPedidoGeradoProducao] = useState<File | null>(null)
   const [pedidoAssinado, setPedidoAssinado] = useState<File | null>(null)
   const [comprovanteSinal, setComprovanteSinal] = useState<File | null>(null)
+
+  // Dados lidos pela IA em cada documento (mesmo fluxo do Almoxarifado: lê ao
+  // anexar, preenche os campos abaixo, o vendedor confere e pode corrigir tudo
+  // antes de enviar). Guardamos a leitura de cada documento para não precisar
+  // chamar a IA de novo ao salvar o pedido.
+  type DadosDocumento = { numeroPedido: string | null; nomeCliente: string | null; cidadeCliente: string | null; telefoneCliente: string | null; prazoEntrega: string | null; dataDocumento: string | null }
+  const [extraidos, setExtraidos] = useState<Partial<Record<'pedidoGerado' | 'pedidoGeradoProducao' | 'pedidoAssinado', DadosDocumento>>>({})
+  const [lendoDocumento, setLendoDocumento] = useState<string | null>(null)
+
+  const [numeroPedidoDoc, setNumeroPedidoDoc] = useState('')
+  const [nomeCliente, setNomeCliente] = useState('')
+  const [cidadeCliente, setCidadeCliente] = useState('')
+  const [telefoneCliente, setTelefoneCliente] = useState('')
+  const [prazoEntrega, setPrazoEntrega] = useState('')
+
+  async function handleAnexo(
+    campo: 'pedidoGerado' | 'pedidoGeradoProducao' | 'pedidoAssinado',
+    file: File | null,
+    setFile: (f: File | null) => void,
+  ) {
+    setFile(file)
+    if (!file) return
+    setLendoDocumento(campo)
+    try {
+      const formData = new FormData()
+      formData.append('arquivo', file)
+      const { data } = await pedidosApi.lerDocumento(formData)
+      setExtraidos((p) => ({ ...p, [campo]: data }))
+      // Só preenche campos ainda vazios — não sobrescreve o que o vendedor já digitou.
+      setNumeroPedidoDoc((v) => v || data.numeroPedido || '')
+      setNomeCliente((v) => v || data.nomeCliente || '')
+      setCidadeCliente((v) => v || data.cidadeCliente || '')
+      setTelefoneCliente((v) => v || data.telefoneCliente || '')
+      setPrazoEntrega((v) => v || data.prazoEntrega || '')
+    } catch (err) {
+      console.error('[ia] falha ao ler documento:', err)
+    } finally {
+      setLendoDocumento(null)
+    }
+  }
   const [amostraEmbalagem, setAmostraEmbalagem] = useState(false)
   const [amostraNaoSeAplica, setAmostraNaoSeAplica] = useState(false)
   const [amostraPedidaCliente, setAmostraPedidaCliente] = useState(false)
@@ -86,6 +126,15 @@ export default function NovoPedido() {
       formData.append('pedidoGeradoProducao', pedidoGeradoProducao!)
       formData.append('pedidoAssinado', pedidoAssinado!)
       if (comprovanteSinal) formData.append('comprovanteSinal', comprovanteSinal)
+      if (nomeCliente.trim()) formData.append('nomeCliente', nomeCliente.trim())
+      if (cidadeCliente.trim()) formData.append('cidadeCliente', cidadeCliente.trim())
+      if (telefoneCliente.trim()) formData.append('telefoneCliente', telefoneCliente.trim())
+      if (prazoEntrega) formData.append('prazoEntrega', prazoEntrega)
+      // Leitura da IA já conferida pelo vendedor — reaproveitada no backend
+      // em vez de ler os documentos de novo.
+      if (extraidos.pedidoGerado) formData.append('dadosPedidoGerado', JSON.stringify(extraidos.pedidoGerado))
+      if (extraidos.pedidoGeradoProducao) formData.append('dadosPedidoGeradoProducao', JSON.stringify(extraidos.pedidoGeradoProducao))
+      if (extraidos.pedidoAssinado) formData.append('dadosPedidoAssinado', JSON.stringify(extraidos.pedidoAssinado))
       formData.append('amostraNaoSeAplica', String(amostraNaoSeAplica))
       formData.append('amostraEmbalagem', String(!amostraNaoSeAplica && amostraEmbalagem))
       formData.append('amostraPedidaCliente', String(!amostraNaoSeAplica && amostraPedidaCliente))
@@ -122,14 +171,47 @@ export default function NovoPedido() {
 
         <div className="card divide-y divide-gray-100">
           <h2 className="section-title">Documentos obrigatórios</h2>
+          <p className="text-xs text-gray-500 -mt-2">
+            Ao anexar, a IA lê o documento e sugere os dados do cliente abaixo — confira e corrija antes de enviar.
+          </p>
           <div className="pt-4">
-            <DocItem titulo="Pedido Gerado" value={pedidoGerado} onChange={setPedidoGerado} />
+            <DocItem titulo="Pedido Gerado" value={pedidoGerado} onChange={(f) => handleAnexo('pedidoGerado', f, setPedidoGerado)} />
+            {lendoDocumento === 'pedidoGerado' && <p className="text-xs text-purple-600 mt-1">🤖 Lendo documento...</p>}
           </div>
           <div className="pt-4">
-            <DocItem titulo="Pedido Gerado Produção" value={pedidoGeradoProducao} onChange={setPedidoGeradoProducao} />
+            <DocItem titulo="Pedido Gerado Produção" value={pedidoGeradoProducao} onChange={(f) => handleAnexo('pedidoGeradoProducao', f, setPedidoGeradoProducao)} />
+            {lendoDocumento === 'pedidoGeradoProducao' && <p className="text-xs text-purple-600 mt-1">🤖 Lendo documento...</p>}
           </div>
           <div className="pt-4">
-            <DocItem titulo="Pedido Assinado" value={pedidoAssinado} onChange={setPedidoAssinado} />
+            <DocItem titulo="Pedido Assinado" value={pedidoAssinado} onChange={(f) => handleAnexo('pedidoAssinado', f, setPedidoAssinado)} />
+            {lendoDocumento === 'pedidoAssinado' && <p className="text-xs text-purple-600 mt-1">🤖 Lendo documento...</p>}
+          </div>
+        </div>
+
+        <div className="card">
+          <h2 className="section-title">Dados do cliente</h2>
+          <p className="text-xs text-gray-500 mb-3">Preenchido automaticamente pela IA ao anexar os documentos — confira e ajuste se necessário.</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="label">Nº do pedido no documento</label>
+              <input className="input" value={numeroPedidoDoc} onChange={(e) => setNumeroPedidoDoc(e.target.value)} placeholder="Preenchido pela IA" />
+            </div>
+            <div className="col-span-2">
+              <label className="label">Nome do cliente</label>
+              <input className="input" value={nomeCliente} onChange={(e) => setNomeCliente(e.target.value)} placeholder="Preenchido pela IA" />
+            </div>
+            <div>
+              <label className="label">Cidade</label>
+              <input className="input" value={cidadeCliente} onChange={(e) => setCidadeCliente(e.target.value)} placeholder="Preenchido pela IA" />
+            </div>
+            <div>
+              <label className="label">Telefone</label>
+              <input className="input" value={telefoneCliente} onChange={(e) => setTelefoneCliente(e.target.value)} placeholder="Preenchido pela IA" />
+            </div>
+            <div className="col-span-2">
+              <label className="label">Prazo de entrega</label>
+              <input className="input" type="date" value={prazoEntrega} onChange={(e) => setPrazoEntrega(e.target.value)} />
+            </div>
           </div>
         </div>
 
