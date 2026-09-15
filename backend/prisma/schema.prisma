@@ -215,6 +215,12 @@ model Pedido {
   compBanco            String?
   compClienteConfere   Boolean      @default(false)
   compPedidoConfere    Boolean      @default(false)
+  // Leitura automática do comprovante de sinal pela IA (sugestão — o
+  // Financeiro confere e confirma manualmente os campos acima).
+  compExtraidoValor    Float?
+  compExtraidoData     DateTime?
+  compExtraidoBanco    String?
+  compExtraidoCliente  String?
   aguardandoSinal      Boolean      @default(false)
   financeiroObservacao String?
   financeiroLiberadoEm DateTime?
@@ -345,6 +351,8 @@ model Foto {
   nomeCliente   String?
   cidadeCliente String?
   visivelPara   Role[]
+  // Leitura automática por IA (Claude) no momento do anexo.
+  dadosExtraidos Json?
   createdAt     DateTime  @default(now())
 }
 

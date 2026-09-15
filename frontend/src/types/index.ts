@@ -1,3 +1,31 @@
+// O que a IA (Claude) extraiu automaticamente de um documento/foto anexado.
+export interface DadosExtraidosIA {
+  resumo?: string | null
+  numeroPedido?: string | null
+  nomeCliente?: string | null
+  cidadeCliente?: string | null
+  estadoCliente?: string | null
+  telefoneCliente?: string | null
+  emailCliente?: string | null
+  equipamento?: string | null
+  modelo?: string | null
+  condicaoPagamento?: string | null
+  prazoEntrega?: string | null
+  valor?: number | null
+  dataDocumento?: string | null
+  bancoOuForma?: string | null
+  observacoes?: string | null
+}
+
+export interface FotoAnexo {
+  id: string
+  url: string
+  descricao?: string
+  usuario?: { nome: string }
+  createdAt: string
+  dadosExtraidos?: DadosExtraidosIA | null
+}
+
 export type Role =
   | 'ADMIN' | 'DIRETOR' | 'GESTOR_ADMIN' | 'GESTOR_PRODUCAO'
   | 'GERENTE_OPERACIONAL' | 'VENDEDOR' | 'COMPRADOR' | 'FINANCEIRO'
@@ -102,9 +130,13 @@ export interface Pedido {
   amostraEnviada?: boolean | null
   amostraChegou?: boolean | null
   comprovanteSinal?: string | null
+  compExtraidoValor?: number | null
+  compExtraidoData?: string | null
+  compExtraidoBanco?: string | null
+  compExtraidoCliente?: string | null
   createdAt: string
   os?: OS[]
-  fotos?: { id: string; url: string; descricao?: string; usuario?: { nome: string }; createdAt: string }[]
+  fotos?: FotoAnexo[]
 }
 
 export interface OS {

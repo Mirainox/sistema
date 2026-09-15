@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { pedidosApi, osApi } from '../../api'
-import { Pedido } from '../../types'
+import { Pedido, FotoAnexo } from '../../types'
 import { formatarData, formatarMoeda, STATUS_PEDIDO_COR, STATUS_PEDIDO_LABEL, STATUS_OS_COR, STATUS_OS_LABEL, VOLTAGEM_LABEL, FASE_ENTREGA_LABEL } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
 import AnexoDocumentoInput from '../../components/AnexoDocumentoInput'
@@ -13,6 +13,39 @@ function Chip({ ok, warn, children }: { ok: boolean; warn?: boolean; children: R
       <span>{ok ? '✅' : '⬜'}</span>
       {children}
     </span>
+  )
+}
+
+function DocumentoRow({ foto }: { foto: FotoAnexo }) {
+  const [aberto, setAberto] = useState(false)
+  const d = foto.dadosExtraidos
+  const temDados = !!(d && (d.resumo || d.nomeCliente || d.cidadeCliente || d.equipamento || d.valor != null || d.observacoes))
+
+  return (
+    <div className="border border-gray-100 rounded-lg overflow-hidden">
+      <div className="doc-row">
+        <a href={foto.url} target="_blank" rel="noreferrer" className="font-medium text-sm hover:underline">{foto.descricao || 'Documento'}</a>
+        <div className="flex items-center gap-3 shrink-0">
+          {temDados && (
+            <button type="button" onClick={() => setAberto((v) => !v)} className="text-xs text-purple-600 hover:underline">
+              🤖 {aberto ? 'ocultar' : 'ver leitura da IA'}
+            </button>
+          )}
+          <a href={foto.url} target="_blank" rel="noreferrer" className="text-xs text-blue-600">Abrir →</a>
+        </div>
+      </div>
+      {aberto && d && (
+        <div className="px-3 pb-3 pt-1 text-xs text-gray-600 space-y-1 bg-purple-50/50 border-t border-purple-100">
+          {d.resumo && <p className="italic text-gray-500">{d.resumo}</p>}
+          {d.nomeCliente && <p><span className="text-gray-400">Cliente: </span>{d.nomeCliente}</p>}
+          {d.cidadeCliente && <p><span className="text-gray-400">Cidade: </span>{d.cidadeCliente}{d.estadoCliente ? `/${d.estadoCliente}` : ''}</p>}
+          {d.equipamento && <p><span className="text-gray-400">Equipamento: </span>{d.equipamento} {d.modelo || ''}</p>}
+          {d.valor != null && <p><span className="text-gray-400">Valor: </span>{formatarMoeda(d.valor)}</p>}
+          {d.prazoEntrega && <p><span className="text-gray-400">Prazo: </span>{formatarData(d.prazoEntrega)}</p>}
+          {d.observacoes && <p><span className="text-gray-400">Obs.: </span>{d.observacoes}</p>}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -356,6 +389,29 @@ export default function DetalhePedido() {
                 Preencha quando houver comprovante anexado.
                 {!pedido.comprovanteSinal && <span className="text-amber-600"> Nenhum comprovante anexado ainda.</span>}
               </p>
+              {(pedido.compExtraidoValor != null || pedido.compExtraidoData || pedido.compExtraidoBanco) && (
+                <div className="flex items-center justify-between gap-3 flex-wrap bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 mb-3 text-xs text-purple-800">
+                  <span>
+                    🤖 A IA leu no comprovante:
+                    {pedido.compExtraidoValor != null && <> {formatarMoeda(pedido.compExtraidoValor)}</>}
+                    {pedido.compExtraidoData && <> · {formatarData(pedido.compExtraidoData)}</>}
+                    {pedido.compExtraidoBanco && <> · {pedido.compExtraidoBanco}</>}
+                    {pedido.compExtraidoCliente && <> · cliente: {pedido.compExtraidoCliente}</>}
+                    {' '}— confira antes de usar.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (pedido.compExtraidoValor != null) setFCompValor(String(pedido.compExtraidoValor))
+                      if (pedido.compExtraidoData) setFCompData(pedido.compExtraidoData.slice(0, 10))
+                      if (pedido.compExtraidoBanco) setFCompBanco(pedido.compExtraidoBanco)
+                    }}
+                    className="text-xs font-medium bg-purple-600 text-white px-2.5 py-1 rounded-md hover:bg-purple-700 shrink-0"
+                  >
+                    Usar estes valores
+                  </button>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="label">Valor do comprovante</label>
@@ -608,12 +664,7 @@ export default function DetalhePedido() {
         <div className="card">
           <h2 className="section-title">📎 Documentos do pedido</h2>
           <div className="space-y-2">
-            {pedido.fotos?.map((foto) => (
-              <a key={foto.id} href={foto.url} target="_blank" rel="noreferrer" className="doc-row">
-                <span className="font-medium text-sm">{foto.descricao || 'Documento'}</span>
-                <span className="text-xs text-blue-600">Abrir →</span>
-              </a>
-            ))}
+            {pedido.fotos?.map((foto) => <DocumentoRow key={foto.id} foto={foto} />)}
             {pedido.comprovanteSinal && (
               <a href={pedido.comprovanteSinal} target="_blank" rel="noreferrer" className="doc-row">
                 <span className="font-medium text-sm">Comprovante de Sinal</span>
