@@ -33,14 +33,32 @@ export async function criar(req: Request, res: Response) {
   return res.status(201).json(item)
 }
 
+// Busca rápida por uma peça já cadastrada: primeiro pelo código lido (mais
+// confiável), depois pelo nome — exato e, por último, parcial.
+async function buscarItemExistente(codigo: string | null, nome: string | null) {
+  if (codigo) {
+    const porCodigo = await prisma.estoque.findFirst({ where: { codigo: { equals: codigo, mode: 'insensitive' } } })
+    if (porCodigo) return porCodigo
+  }
+  if (nome) {
+    const porNomeExato = await prisma.estoque.findFirst({ where: { descricao: { equals: nome, mode: 'insensitive' } } })
+    if (porNomeExato) return porNomeExato
+    const porNomeParcial = await prisma.estoque.findFirst({ where: { descricao: { contains: nome, mode: 'insensitive' } } })
+    if (porNomeParcial) return porNomeParcial
+  }
+  return null
+}
+
 // Almoxarifado (Carlos, Matheus): tira/anexa uma foto da peça e a IA sugere
-// código, nome, quantidade, valor e unidade — só preenche o formulário, quem
-// confere e salva é o funcionário.
+// código, nome, quantidade, valor e unidade. Antes de devolver, fazemos uma
+// busca rápida no estoque: se a peça já existir, o funcionário só confirma a
+// entrada da quantidade lida; se não existir, ele confere e cadastra do zero.
 export async function lerFoto(req: AuthRequest, res: Response) {
   if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' })
   const dados = await lerFotoPeca(req.file)
-  if (!dados) return res.json({ codigo: null, nome: null, quantidade: null, valor: null, unidade: null })
-  return res.json(dados)
+  if (!dados) return res.json({ codigo: null, nome: null, quantidade: null, valor: null, unidade: null, itemExistente: null })
+  const itemExistente = await buscarItemExistente(dados.codigo, dados.nome)
+  return res.json({ ...dados, itemExistente })
 }
 
 export async function movimentar(req: AuthRequest, res: Response) {

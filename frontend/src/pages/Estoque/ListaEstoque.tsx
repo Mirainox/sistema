@@ -17,6 +17,7 @@ export default function ListaEstoque() {
   const [movForm, setMovForm] = useState({ tipo: 'ENTRADA', quantidade: '', motivo: '' })
   const [novoForm, setNovoForm] = useState({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '' })
   const [lendoFoto, setLendoFoto] = useState(false)
+  const [avisoLeitura, setAvisoLeitura] = useState('')
 
   useEffect(() => { carregar() }, [tipoFiltro])
 
@@ -32,6 +33,7 @@ export default function ListaEstoque() {
     await estoqueApi.movimentar(modalMovimentar.id, { ...movForm, quantidade: Number(movForm.quantidade) })
     setModalMovimentar(null)
     setMovForm({ tipo: 'ENTRADA', quantidade: '', motivo: '' })
+    setAvisoLeitura('')
     carregar()
   }
 
@@ -44,23 +46,43 @@ export default function ListaEstoque() {
     })
     setModalCriar(false)
     setNovoForm({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '' })
+    setAvisoLeitura('')
     carregar()
   }
 
+  // Encarregado anexa a foto da peça: a IA lê e o sistema busca no estoque
+  // inteiro se essa peça já existe. Se existir, só abre a Movimentação
+  // (entrada) já preenchida com a quantidade lida — o encarregado confere e
+  // confirma. Se não existir, abre o cadastro de Novo Item já preenchido.
   async function lerFotoPeca(file: File) {
     setLendoFoto(true)
+    setAvisoLeitura('')
     try {
       const formData = new FormData()
       formData.append('arquivo', file)
       const { data } = await estoqueApi.lerFoto(formData)
-      setNovoForm((p) => ({
-        ...p,
-        codigo: data.codigo || p.codigo,
-        descricao: data.nome || p.descricao,
-        unidade: data.unidade || p.unidade,
-        quantidade: data.quantidade != null ? String(data.quantidade) : p.quantidade,
-        valorUnitario: data.valor != null ? String(data.valor) : p.valorUnitario,
-      }))
+
+      if (data.itemExistente) {
+        const item: Estoque = data.itemExistente
+        setModalMovimentar(item)
+        setMovForm({
+          tipo: 'ENTRADA',
+          quantidade: data.quantidade != null ? String(data.quantidade) : '',
+          motivo: 'Entrada via leitura de foto (IA)',
+        })
+        setAvisoLeitura(`🤖 Essa peça já está no estoque (${item.quantidade} ${item.unidade} atualmente). Confira a quantidade lida antes de confirmar a entrada.`)
+      } else {
+        setNovoForm((p) => ({
+          ...p,
+          codigo: data.codigo || p.codigo,
+          descricao: data.nome || p.descricao,
+          unidade: data.unidade || p.unidade,
+          quantidade: data.quantidade != null ? String(data.quantidade) : p.quantidade,
+          valorUnitario: data.valor != null ? String(data.valor) : p.valorUnitario,
+        }))
+        setAvisoLeitura('🤖 Peça não encontrada no estoque — confira os dados e cadastre.')
+        setModalCriar(true)
+      }
     } catch (err) {
       console.error(err)
     } finally {
@@ -81,7 +103,23 @@ export default function ListaEstoque() {
         title="Almoxarifado"
         subtitle="Pedidos liberados para o setor e controle de estoque"
         actions={aba === 'estoque' && hasRole('ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'ALMOXARIFE', 'GERENTE_OPERACIONAL') && (
-          <button className="btn-primary" onClick={() => setModalCriar(true)}>+ Novo Item</button>
+          <div className="flex gap-2">
+            <label className="btn-secondary cursor-pointer">
+              {lendoFoto ? 'Lendo foto...' : '📷 Ler foto da peça (IA)'}
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                className="hidden"
+                disabled={lendoFoto}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) lerFotoPeca(file)
+                  e.target.value = ''
+                }}
+              />
+            </label>
+            <button className="btn-primary" onClick={() => { setAvisoLeitura(''); setModalCriar(true) }}>+ Novo Item</button>
+          </div>
         )}
       />
 
@@ -140,7 +178,7 @@ export default function ListaEstoque() {
                   <td className="py-3 text-gray-600">{item.valorUnitario != null ? `R$ ${item.valorUnitario.toFixed(2)}` : '-'}</td>
                   <td className="py-3 text-gray-600">{item.localizacao || '-'}</td>
                   <td className="py-3">
-                    <button className="text-blue-600 hover:underline text-xs" onClick={() => setModalMovimentar(item)}>Movimentar</button>
+                    <button className="text-blue-600 hover:underline text-xs" onClick={() => { setAvisoLeitura(''); setModalMovimentar(item) }}>Movimentar</button>
                   </td>
                 </tr>
               ))}
@@ -154,6 +192,7 @@ export default function ListaEstoque() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-96 space-y-4">
             <h2 className="font-semibold text-lg">Movimentar: {modalMovimentar.descricao}</h2>
+            {avisoLeitura && <p className="text-xs text-purple-600 bg-purple-50/50 border border-purple-100 rounded-lg p-2">{avisoLeitura}</p>}
             <div>
               <label className="label">Tipo</label>
               <select className="input" value={movForm.tipo} onChange={(e) => setMovForm((p) => ({ ...p, tipo: e.target.value }))}>
@@ -165,7 +204,7 @@ export default function ListaEstoque() {
             <div><label className="label">Motivo</label><input className="input" value={movForm.motivo} onChange={(e) => setMovForm((p) => ({ ...p, motivo: e.target.value }))} /></div>
             <div className="flex gap-2">
               <button className="btn-primary" onClick={movimentar}>Confirmar</button>
-              <button className="btn-secondary" onClick={() => setModalMovimentar(null)}>Cancelar</button>
+              <button className="btn-secondary" onClick={() => { setModalMovimentar(null); setAvisoLeitura('') }}>Cancelar</button>
             </div>
           </div>
         </div>
@@ -175,23 +214,7 @@ export default function ListaEstoque() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-96 space-y-4 max-h-[90vh] overflow-y-auto">
             <h2 className="font-semibold text-lg">Novo Item de Estoque</h2>
-
-            <div className="border border-purple-200 bg-purple-50/50 rounded-lg p-3 space-y-2">
-              <label className="label">📷 Ler foto da peça (IA)</label>
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                className="input text-xs"
-                disabled={lendoFoto}
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) lerFotoPeca(file)
-                  e.target.value = ''
-                }}
-              />
-              {lendoFoto && <p className="text-xs text-purple-600">Lendo foto, aguarde...</p>}
-              <p className="text-xs text-gray-500">A IA tenta preencher os campos abaixo automaticamente. Confira tudo antes de salvar.</p>
-            </div>
+            {avisoLeitura && <p className="text-xs text-purple-600 bg-purple-50/50 border border-purple-100 rounded-lg p-2">{avisoLeitura}</p>}
 
             <div>
               <label className="label">Tipo</label>
@@ -210,7 +233,7 @@ export default function ListaEstoque() {
             <div><label className="label">Valor Unitário (R$)</label><input className="input" type="number" step="0.01" value={novoForm.valorUnitario} onChange={(e) => setNovoForm((p) => ({ ...p, valorUnitario: e.target.value }))} /></div>
             <div className="flex gap-2">
               <button className="btn-primary" onClick={criarItem}>Salvar</button>
-              <button className="btn-secondary" onClick={() => setModalCriar(false)}>Cancelar</button>
+              <button className="btn-secondary" onClick={() => { setModalCriar(false); setAvisoLeitura('') }}>Cancelar</button>
             </div>
           </div>
         </div>
