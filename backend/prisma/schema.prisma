@@ -396,7 +396,6 @@ model Estoque {
   quantidade       Float       @default(0)
   quantidadeMinima Float       @default(0)
   valorUnitario    Float?
-  localizacao      String?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 

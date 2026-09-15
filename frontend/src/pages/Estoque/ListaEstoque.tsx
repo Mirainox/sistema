@@ -15,7 +15,7 @@ export default function ListaEstoque() {
   const [modalMovimentar, setModalMovimentar] = useState<Estoque | null>(null)
   const [modalCriar, setModalCriar] = useState(false)
   const [movForm, setMovForm] = useState({ tipo: 'ENTRADA', quantidade: '', motivo: '' })
-  const [novoForm, setNovoForm] = useState({ tipo: 'MATERIA_PRIMA_BRUTA', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '', localizacao: '' })
+  const [novoForm, setNovoForm] = useState({ tipo: 'MATERIA_PRIMA_BRUTA', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '' })
   const [lendoFoto, setLendoFoto] = useState(false)
   const [avisoLeitura, setAvisoLeitura] = useState('')
 
@@ -45,7 +45,7 @@ export default function ListaEstoque() {
       valorUnitario: novoForm.valorUnitario ? Number(novoForm.valorUnitario) : null,
     })
     setModalCriar(false)
-    setNovoForm({ tipo: 'MATERIA_PRIMA_BRUTA', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '', localizacao: '' })
+    setNovoForm({ tipo: 'MATERIA_PRIMA_BRUTA', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '' })
     setAvisoLeitura('')
     carregar()
   }
@@ -80,7 +80,6 @@ export default function ListaEstoque() {
           unidade: data.unidade || p.unidade,
           quantidade: data.quantidade != null ? String(data.quantidade) : p.quantidade,
           valorUnitario: data.valor != null ? String(data.valor) : p.valorUnitario,
-          localizacao: data.localizacao || p.localizacao,
         }))
         setAvisoLeitura('🤖 Peça não encontrada no estoque — confira os dados e cadastre.')
         setModalCriar(true)
@@ -143,7 +142,6 @@ export default function ListaEstoque() {
                 <th className="pb-3 font-semibold text-gray-700">Quantidade</th>
                 <th className="pb-3 font-semibold text-gray-700">Mínimo</th>
                 <th className="pb-3 font-semibold text-gray-700">Valor unit.</th>
-                <th className="pb-3 font-semibold text-gray-700">Localização</th>
                 <th className="pb-3 font-semibold text-gray-700">Ações</th>
               </tr>
             </thead>
@@ -160,7 +158,6 @@ export default function ListaEstoque() {
                   </td>
                   <td className="py-3 text-gray-600">{item.quantidadeMinima} {item.unidade}</td>
                   <td className="py-3 text-gray-600">{item.valorUnitario != null ? `R$ ${item.valorUnitario.toFixed(2)}` : '-'}</td>
-                  <td className="py-3 text-gray-600">{item.localizacao || '-'}</td>
                   <td className="py-3">
                     <button className="text-blue-600 hover:underline text-xs" onClick={() => { setAvisoLeitura(''); setModalMovimentar(item) }}>Movimentar</button>
                   </td>
@@ -231,7 +228,6 @@ export default function ListaEstoque() {
             <div><label className="label">Quantidade</label><input className="input" type="number" value={novoForm.quantidade} onChange={(e) => setNovoForm((p) => ({ ...p, quantidade: e.target.value }))} /></div>
             <div><label className="label">Qtd. Mínima</label><input className="input" type="number" value={novoForm.quantidadeMinima} onChange={(e) => setNovoForm((p) => ({ ...p, quantidadeMinima: e.target.value }))} /></div>
             <div><label className="label">Valor Unitário (R$)</label><input className="input" type="number" step="0.01" value={novoForm.valorUnitario} onChange={(e) => setNovoForm((p) => ({ ...p, valorUnitario: e.target.value }))} /></div>
-            <div><label className="label">Localização</label><input className="input" value={novoForm.localizacao} onChange={(e) => setNovoForm((p) => ({ ...p, localizacao: e.target.value }))} placeholder="Ex.: Prateleira A3" /></div>
             <div className="flex gap-2">
               <button className="btn-primary" onClick={criarItem}>Salvar</button>
               <button className="btn-secondary" onClick={() => { setModalCriar(false); setAvisoLeitura('') }}>Cancelar</button>

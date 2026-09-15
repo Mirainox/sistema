@@ -167,7 +167,6 @@ export interface Estoque {
   quantidade: number
   quantidadeMinima: number
   valorUnitario?: number | null
-  localizacao?: string
 }
 
 export interface Notificacao {

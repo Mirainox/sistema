@@ -45,7 +45,7 @@ async function buscarItemExistente(nome: string | null) {
 export async function lerFoto(req: AuthRequest, res: Response) {
   if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' })
   const dados = await lerFotoPeca(req.file)
-  if (!dados) return res.json({ nome: null, tipo: null, quantidade: null, valor: null, unidade: null, localizacao: null, itemExistente: null })
+  if (!dados) return res.json({ nome: null, tipo: null, quantidade: null, valor: null, unidade: null, itemExistente: null })
   const itemExistente = await buscarItemExistente(dados.nome)
   return res.json({ ...dados, itemExistente })
 }
