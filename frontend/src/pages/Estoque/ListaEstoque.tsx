@@ -64,6 +64,7 @@ export default function ListaEstoque() {
 
       if (data.itemExistente) {
         const item: Estoque = data.itemExistente
+        setModalCriar(false)
         setModalMovimentar(item)
         setMovForm({
           tipo: 'ENTRADA',
@@ -103,23 +104,7 @@ export default function ListaEstoque() {
         title="Almoxarifado"
         subtitle="Pedidos liberados para o setor e controle de estoque"
         actions={aba === 'estoque' && hasRole('ADMIN', 'DIRETOR', 'GESTOR_ADMIN', 'GESTOR_PRODUCAO', 'ALMOXARIFE', 'GERENTE_OPERACIONAL') && (
-          <div className="flex gap-2">
-            <label className="btn-secondary cursor-pointer">
-              {lendoFoto ? 'Lendo foto...' : '📷 Ler foto da peça (IA)'}
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                className="hidden"
-                disabled={lendoFoto}
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) lerFotoPeca(file)
-                  e.target.value = ''
-                }}
-              />
-            </label>
-            <button className="btn-primary" onClick={() => { setAvisoLeitura(''); setModalCriar(true) }}>+ Novo Item</button>
-          </div>
+          <button className="btn-primary" onClick={() => { setAvisoLeitura(''); setModalCriar(true) }}>+ Novo Item</button>
         )}
       />
 
@@ -214,6 +199,23 @@ export default function ListaEstoque() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-96 space-y-4 max-h-[90vh] overflow-y-auto">
             <h2 className="font-semibold text-lg">Novo Item de Estoque</h2>
+
+            <div className="border border-purple-200 bg-purple-50/50 rounded-lg p-3 space-y-2">
+              <label className="label">📷 Ler foto da peça (IA)</label>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                className="input text-xs"
+                disabled={lendoFoto}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) lerFotoPeca(file)
+                  e.target.value = ''
+                }}
+              />
+              {lendoFoto && <p className="text-xs text-purple-600">Lendo foto, aguarde...</p>}
+              <p className="text-xs text-gray-500">A IA busca no estoque: se a peça já existir, só soma a quantidade; se não existir, preenche os campos abaixo para cadastro. Confira tudo antes de salvar.</p>
+            </div>
             {avisoLeitura && <p className="text-xs text-purple-600 bg-purple-50/50 border border-purple-100 rounded-lg p-2">{avisoLeitura}</p>}
 
             <div>
