@@ -172,25 +172,23 @@ export default function NovoPedido() {
         <div className="card divide-y divide-gray-100">
           <h2 className="section-title">Documentos obrigatórios</h2>
           <p className="text-xs text-gray-500 -mt-2">
-            Ao anexar, a IA lê o documento e sugere os dados do cliente abaixo — confira e corrija antes de enviar.
+            Ao anexar o Pedido Gerado, a IA lê o documento e sugere os dados do cliente abaixo — confira e corrija antes de enviar.
           </p>
           <div className="pt-4">
             <DocItem titulo="Pedido Gerado" value={pedidoGerado} onChange={(f) => handleAnexo('pedidoGerado', f, setPedidoGerado)} />
             {lendoDocumento === 'pedidoGerado' && <p className="text-xs text-purple-600 mt-1">🤖 Lendo documento...</p>}
           </div>
           <div className="pt-4">
-            <DocItem titulo="Pedido Gerado Produção" value={pedidoGeradoProducao} onChange={(f) => handleAnexo('pedidoGeradoProducao', f, setPedidoGeradoProducao)} />
-            {lendoDocumento === 'pedidoGeradoProducao' && <p className="text-xs text-purple-600 mt-1">🤖 Lendo documento...</p>}
+            <DocItem titulo="Pedido Gerado Produção" value={pedidoGeradoProducao} onChange={setPedidoGeradoProducao} />
           </div>
           <div className="pt-4">
-            <DocItem titulo="Pedido Assinado" value={pedidoAssinado} onChange={(f) => handleAnexo('pedidoAssinado', f, setPedidoAssinado)} />
-            {lendoDocumento === 'pedidoAssinado' && <p className="text-xs text-purple-600 mt-1">🤖 Lendo documento...</p>}
+            <DocItem titulo="Pedido Assinado" value={pedidoAssinado} onChange={setPedidoAssinado} />
           </div>
         </div>
 
         <div className="card">
           <h2 className="section-title">Dados do cliente</h2>
-          <p className="text-xs text-gray-500 mb-3">Preenchido automaticamente pela IA ao anexar os documentos — confira e ajuste se necessário.</p>
+          <p className="text-xs text-gray-500 mb-3">Preenchido automaticamente pela IA ao anexar o Pedido Gerado — confira e ajuste se necessário.</p>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="label">Nº do pedido no documento</label>
