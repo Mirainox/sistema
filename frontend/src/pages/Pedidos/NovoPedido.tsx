@@ -59,6 +59,8 @@ export default function NovoPedido() {
   const [nomeCliente, setNomeCliente] = useState('')
   const [cidadeCliente, setCidadeCliente] = useState('')
   const [telefoneCliente, setTelefoneCliente] = useState('')
+  const [equipamento, setEquipamento] = useState('')
+  const [modelo, setModelo] = useState('')
   const [prazoEntrega, setPrazoEntrega] = useState('')
 
   async function handleAnexoPedidoGerado(file: File | null) {
@@ -74,6 +76,8 @@ export default function NovoPedido() {
       setNomeCliente((v) => v || data.nomeCliente || '')
       setCidadeCliente((v) => v || data.cidadeCliente || '')
       setTelefoneCliente((v) => v || data.telefoneCliente || '')
+      setEquipamento((v) => v || data.equipamento || '')
+      setModelo((v) => v || data.modelo || '')
       setPrazoEntrega((v) => v || data.prazoEntrega || '')
     } catch (err) {
       console.error('[ia] falha ao ler documento:', err)
@@ -120,6 +124,8 @@ export default function NovoPedido() {
       if (nomeCliente.trim()) formData.append('nomeCliente', nomeCliente.trim())
       if (cidadeCliente.trim()) formData.append('cidadeCliente', cidadeCliente.trim())
       if (telefoneCliente.trim()) formData.append('telefoneCliente', telefoneCliente.trim())
+      if (equipamento.trim()) formData.append('equipamento', equipamento.trim())
+      if (modelo.trim()) formData.append('modelo', modelo.trim())
       if (prazoEntrega) formData.append('prazoEntrega', prazoEntrega)
       formData.append('amostraNaoSeAplica', String(amostraNaoSeAplica))
       formData.append('amostraEmbalagem', String(!amostraNaoSeAplica && amostraEmbalagem))
@@ -173,7 +179,7 @@ export default function NovoPedido() {
         </div>
 
         <div className="card">
-          <h2 className="section-title">Dados do cliente</h2>
+          <h2 className="section-title">Dados do cliente e equipamento</h2>
           <p className="text-xs text-gray-500 mb-3">Preenchido automaticamente pela IA ao anexar o Pedido Gerado — confira e ajuste se necessário.</p>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
@@ -191,6 +197,14 @@ export default function NovoPedido() {
             <div>
               <label className="label">Telefone</label>
               <input className="input" value={telefoneCliente} onChange={(e) => setTelefoneCliente(e.target.value)} placeholder="Preenchido pela IA" />
+            </div>
+            <div>
+              <label className="label">Equipamento</label>
+              <input className="input" value={equipamento} onChange={(e) => setEquipamento(e.target.value)} placeholder="Preenchido pela IA" />
+            </div>
+            <div>
+              <label className="label">Modelo</label>
+              <input className="input" value={modelo} onChange={(e) => setModelo(e.target.value)} placeholder="Preenchido pela IA" />
             </div>
             <div className="col-span-2">
               <label className="label">Prazo de entrega</label>

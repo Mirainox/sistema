@@ -28,6 +28,13 @@ async function aplicarDadosLidosPelaIA(pedidoId: string, dados: DadosPedido) {
   if (Object.keys(clienteUpdate).length > 0) {
     await prisma.cliente.update({ where: { id: pedido.clienteId }, data: clienteUpdate })
   }
+
+  const pedidoUpdate: { equipamento?: string; modelo?: string } = {}
+  if (dados.equipamento && pedido.equipamento === 'A definir') pedidoUpdate.equipamento = dados.equipamento
+  if (dados.modelo && pedido.modelo === '-') pedidoUpdate.modelo = dados.modelo
+  if (Object.keys(pedidoUpdate).length > 0) {
+    await prisma.pedido.update({ where: { id: pedido.id }, data: pedidoUpdate })
+  }
 }
 
 // Novo Pedido: o vendedor anexa um documento e a IA lê na hora, preenchendo
@@ -36,7 +43,7 @@ async function aplicarDadosLidosPelaIA(pedidoId: string, dados: DadosPedido) {
 export async function lerDocumento(req: AuthRequest, res: Response) {
   if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado' })
   const dados = await lerDocumentoPedido(req.file)
-  if (!dados) return res.json({ numeroPedido: null, nomeCliente: null, cidadeCliente: null, telefoneCliente: null, prazoEntrega: null, dataDocumento: null })
+  if (!dados) return res.json({ numeroPedido: null, nomeCliente: null, cidadeCliente: null, telefoneCliente: null, equipamento: null, modelo: null, prazoEntrega: null, dataDocumento: null })
   return res.json(dados)
 }
 

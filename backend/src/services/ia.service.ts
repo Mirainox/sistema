@@ -72,12 +72,14 @@ export const DadosPedidoSchema = z.object({
   nomeCliente: z.string().nullable(),
   cidadeCliente: z.string().nullable(),
   telefoneCliente: z.string().nullable(),
+  equipamento: z.string().nullable().describe('Nome/tipo do equipamento pedido (ex.: Envasadora, Seladora, Tanque, Masseira)'),
+  modelo: z.string().nullable().describe('Modelo do equipamento, se houver'),
   prazoEntrega: z.string().nullable().describe('Data no formato AAAA-MM-DD, ou null se não houver data explícita/dedutível'),
   dataDocumento: z.string().nullable().describe('Data que aparece no documento, formato AAAA-MM-DD, ou null'),
 })
 export type DadosPedido = z.infer<typeof DadosPedidoSchema>
 
-const PROMPT_PEDIDO = `Este é um documento de pedido de venda de uma empresa de equipamentos em aço inox (Mirainox) — pode ser o pedido gerado, o pedido gerado para produção ou o pedido assinado pelo cliente. Extraia apenas: número do pedido, nome do cliente, cidade do cliente, telefone do cliente, prazo de entrega e a data do documento.
+const PROMPT_PEDIDO = `Este é um documento de pedido de venda de uma empresa de equipamentos em aço inox (Mirainox) — pode ser o pedido gerado, o pedido gerado para produção ou o pedido assinado pelo cliente. Extraia apenas: número do pedido, nome do cliente, cidade do cliente, telefone do cliente, equipamento (nome/tipo), modelo do equipamento, prazo de entrega e a data do documento.
 
 Regras:
 - Se um campo não estiver presente ou legível, retorne null — nunca invente.
