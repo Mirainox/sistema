@@ -4,13 +4,30 @@ import prisma from '../config/database'
 import { AuthRequest } from '../middleware/auth'
 import { notificarPorRole, criarNotificacao } from '../services/notificacao.service'
 import { garantirExpedicao } from '../services/expedicao.service'
-import { lerDocumentoPedido } from '../services/ia.service'
+import { lerDocumentoPedido, DadosPedido } from '../services/ia.service'
 import { podeVer, podeVerTudo, SETORES_PEDIDO_ADMINISTRATIVO, SETORES_PEDIDO_PRODUCAO } from '../utils/visibilidade'
 
 function gerarNumeroPedido() {
   const ano = new Date().getFullYear()
   const seq = String(Date.now()).slice(-5)
   return `PED-${ano}-${seq}`
+}
+
+// A IA leu o "Pedido Gerado Produção" ou o "Pedido Assinado" em segundo plano
+// — completa automaticamente os dados do cliente que ainda estiverem em
+// branco/placeholder, sem sobrescrever o que o vendedor já preencheu.
+async function aplicarDadosLidosPelaIA(pedidoId: string, dados: DadosPedido) {
+  const pedido = await prisma.pedido.findUnique({ where: { id: pedidoId }, include: { cliente: true } })
+  if (!pedido) return
+
+  const placeholderNome = `Cliente do pedido ${pedido.numero} (preencher)`
+  const clienteUpdate: { nome?: string; cidade?: string; telefone?: string } = {}
+  if (dados.nomeCliente && pedido.cliente.nome === placeholderNome) clienteUpdate.nome = dados.nomeCliente
+  if (dados.cidadeCliente && pedido.cliente.cidade === 'A definir') clienteUpdate.cidade = dados.cidadeCliente
+  if (dados.telefoneCliente && !pedido.cliente.telefone) clienteUpdate.telefone = dados.telefoneCliente
+  if (Object.keys(clienteUpdate).length > 0) {
+    await prisma.cliente.update({ where: { id: pedido.clienteId }, data: clienteUpdate })
+  }
 }
 
 // Novo Pedido: o vendedor anexa um documento e a IA lê na hora, preenchendo
@@ -153,29 +170,14 @@ export async function criar(req: AuthRequest, res: Response) {
   })
 
   const documentos = [
-    pedidoGeradoArquivo && { arquivo: pedidoGeradoArquivo, descricao: 'Pedido Gerado', visivelPara: SETORES_PEDIDO_ADMINISTRATIVO },
-    pedidoGeradoProducaoArquivo && { arquivo: pedidoGeradoProducaoArquivo, descricao: 'Pedido Gerado Produção', visivelPara: SETORES_PEDIDO_PRODUCAO },
-    pedidoAssinadoArquivo && { arquivo: pedidoAssinadoArquivo, descricao: 'Pedido Assinado', visivelPara: SETORES_PEDIDO_ADMINISTRATIVO },
-  ].filter(Boolean) as { arquivo: Express.Multer.File; descricao: string; visivelPara: Role[] }[]
+    pedidoGeradoArquivo && { arquivo: pedidoGeradoArquivo, descricao: 'Pedido Gerado', visivelPara: SETORES_PEDIDO_ADMINISTRATIVO, lerComIA: false },
+    pedidoGeradoProducaoArquivo && { arquivo: pedidoGeradoProducaoArquivo, descricao: 'Pedido Gerado Produção', visivelPara: SETORES_PEDIDO_PRODUCAO, lerComIA: true },
+    pedidoAssinadoArquivo && { arquivo: pedidoAssinadoArquivo, descricao: 'Pedido Assinado', visivelPara: SETORES_PEDIDO_ADMINISTRATIVO, lerComIA: true },
+  ].filter(Boolean) as { arquivo: Express.Multer.File; descricao: string; visivelPara: Role[]; lerComIA: boolean }[]
 
-  // O vendedor já leu cada documento com a IA na hora de anexar (mesmo fluxo
-  // do Almoxarifado) e conferiu os dados antes de enviar — reaproveitamos essa
-  // leitura em vez de chamar a IA de novo.
-  function dadosJaLidos(campo: string): any {
-    if (!data[campo]) return null
-    try { return JSON.parse(data[campo]) } catch { return null }
-  }
-  const documentosComDados = documentos.map((d) => ({
-    ...d,
-    dadosExtraidos: d.descricao === 'Pedido Gerado' ? dadosJaLidos('dadosPedidoGerado')
-      : d.descricao === 'Pedido Gerado Produção' ? dadosJaLidos('dadosPedidoGeradoProducao')
-      : dadosJaLidos('dadosPedidoAssinado'),
-  }))
-
-  // Fotos criadas uma a uma (em vez de createMany) para termos o id de cada
-  // uma e poder gravar nela o que a IA ler.
-  const fotosCriadas: { id: string; arquivo: Express.Multer.File }[] = []
-  for (const d of documentosComDados) {
+  // Fotos criadas uma a uma (em vez de createMany) para termos o id de cada uma.
+  const fotosParaLer: { id: string; arquivo: Express.Multer.File }[] = []
+  for (const d of documentos) {
     const foto = await prisma.foto.create({
       data: {
         pedidoId: pedido.id,
@@ -187,17 +189,19 @@ export async function criar(req: AuthRequest, res: Response) {
         nomeCliente: cliente.nome,
         cidadeCliente: cliente.cidade,
         visivelPara: d.visivelPara,
-        dadosExtraidos: d.dadosExtraidos ?? undefined,
       },
     })
-    if (!d.dadosExtraidos) fotosCriadas.push({ id: foto.id, arquivo: d.arquivo })
+    // "Pedido Gerado" já foi lido pelo vendedor no formulário (os dados dele
+    // já estão no pedido/cliente acima) — só os outros dois precisam de leitura.
+    if (d.lerComIA) fotosParaLer.push({ id: foto.id, arquivo: d.arquivo })
   }
 
-  // Documentos que por algum motivo não vieram com leitura prévia (ex.: envio
-  // direto pela API) ainda são lidos em segundo plano, sem atrasar a resposta.
-  for (const f of fotosCriadas) {
+  // Leitura em segundo plano do "Pedido Gerado Produção" e do "Pedido Assinado":
+  // roda internamente, sem interface — só preenche no cadastro do cliente o
+  // que ainda estiver em branco, sem sobrescrever o que o vendedor já conferiu.
+  for (const f of fotosParaLer) {
     lerDocumentoPedido(f.arquivo)
-      .then((dados) => dados && prisma.foto.update({ where: { id: f.id }, data: { dadosExtraidos: dados as any } }))
+      .then((dados) => dados && aplicarDadosLidosPelaIA(pedido.id, dados))
       .catch((err) => console.error('[ia] falha ao ler documento do pedido:', err))
   }
 

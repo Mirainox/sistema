@@ -17,34 +17,11 @@ function Chip({ ok, warn, children }: { ok: boolean; warn?: boolean; children: R
 }
 
 function DocumentoRow({ foto }: { foto: FotoAnexo }) {
-  const [aberto, setAberto] = useState(false)
-  const d = foto.dadosExtraidos
-  const temDados = !!(d && (d.numeroPedido || d.nomeCliente || d.cidadeCliente || d.telefoneCliente || d.prazoEntrega || d.dataDocumento))
-
   return (
-    <div className="border border-gray-100 rounded-lg overflow-hidden">
-      <div className="doc-row">
-        <a href={foto.url} target="_blank" rel="noreferrer" className="font-medium text-sm hover:underline">{foto.descricao || 'Documento'}</a>
-        <div className="flex items-center gap-3 shrink-0">
-          {temDados && (
-            <button type="button" onClick={() => setAberto((v) => !v)} className="text-xs text-purple-600 hover:underline">
-              🤖 {aberto ? 'ocultar' : 'ver leitura da IA'}
-            </button>
-          )}
-          <a href={foto.url} target="_blank" rel="noreferrer" className="text-xs text-blue-600">Abrir →</a>
-        </div>
-      </div>
-      {aberto && d && (
-        <div className="px-3 pb-3 pt-1 text-xs text-gray-600 space-y-1 bg-purple-50/50 border-t border-purple-100">
-          {d.numeroPedido && <p><span className="text-gray-400">Nº no documento: </span>{d.numeroPedido}</p>}
-          {d.nomeCliente && <p><span className="text-gray-400">Cliente: </span>{d.nomeCliente}</p>}
-          {d.cidadeCliente && <p><span className="text-gray-400">Cidade: </span>{d.cidadeCliente}</p>}
-          {d.telefoneCliente && <p><span className="text-gray-400">Telefone: </span>{d.telefoneCliente}</p>}
-          {d.prazoEntrega && <p><span className="text-gray-400">Prazo: </span>{formatarData(d.prazoEntrega)}</p>}
-          {d.dataDocumento && <p><span className="text-gray-400">Data do documento: </span>{formatarData(d.dataDocumento)}</p>}
-        </div>
-      )}
-    </div>
+    <a href={foto.url} target="_blank" rel="noreferrer" className="doc-row">
+      <span className="font-medium text-sm">{foto.descricao || 'Documento'}</span>
+      <span className="text-xs text-blue-600">Abrir →</span>
+    </a>
   )
 }
 

@@ -1,20 +1,9 @@
-// O que a IA (Claude) extraiu automaticamente dos 3 documentos do Novo Pedido.
-export interface DadosExtraidosIA {
-  numeroPedido?: string | null
-  nomeCliente?: string | null
-  cidadeCliente?: string | null
-  telefoneCliente?: string | null
-  prazoEntrega?: string | null
-  dataDocumento?: string | null
-}
-
 export interface FotoAnexo {
   id: string
   url: string
   descricao?: string
   usuario?: { nome: string }
   createdAt: string
-  dadosExtraidos?: DadosExtraidosIA | null
 }
 
 export type Role =
