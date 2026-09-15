@@ -391,7 +391,6 @@ model Compra {
 model Estoque {
   id               String      @id @default(cuid())
   tipo             TipoEstoque
-  codigo           String      @unique
   descricao        String
   unidade          String
   quantidade       Float       @default(0)

@@ -15,7 +15,7 @@ export default function ListaEstoque() {
   const [modalMovimentar, setModalMovimentar] = useState<Estoque | null>(null)
   const [modalCriar, setModalCriar] = useState(false)
   const [movForm, setMovForm] = useState({ tipo: 'ENTRADA', quantidade: '', motivo: '' })
-  const [novoForm, setNovoForm] = useState({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '', localizacao: '' })
+  const [novoForm, setNovoForm] = useState({ tipo: 'MATERIA_PRIMA_BRUTA', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '', localizacao: '' })
   const [lendoFoto, setLendoFoto] = useState(false)
   const [avisoLeitura, setAvisoLeitura] = useState('')
 
@@ -45,7 +45,7 @@ export default function ListaEstoque() {
       valorUnitario: novoForm.valorUnitario ? Number(novoForm.valorUnitario) : null,
     })
     setModalCriar(false)
-    setNovoForm({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '', localizacao: '' })
+    setNovoForm({ tipo: 'MATERIA_PRIMA_BRUTA', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '', localizacao: '' })
     setAvisoLeitura('')
     carregar()
   }
@@ -76,7 +76,6 @@ export default function ListaEstoque() {
         setNovoForm((p) => ({
           ...p,
           tipo: data.tipo || p.tipo,
-          codigo: data.codigo || p.codigo,
           descricao: data.nome || p.descricao,
           unidade: data.unidade || p.unidade,
           quantidade: data.quantidade != null ? String(data.quantidade) : p.quantidade,
@@ -139,7 +138,6 @@ export default function ListaEstoque() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left border-b border-gray-200">
-                <th className="pb-3 font-semibold text-gray-700">Código</th>
                 <th className="pb-3 font-semibold text-gray-700">Descrição</th>
                 <th className="pb-3 font-semibold text-gray-700">Tipo</th>
                 <th className="pb-3 font-semibold text-gray-700">Quantidade</th>
@@ -152,7 +150,6 @@ export default function ListaEstoque() {
             <tbody className="divide-y divide-gray-100">
               {itens.map((item) => (
                 <tr key={item.id} className={`hover:bg-gray-50 ${item.quantidade <= item.quantidadeMinima ? 'bg-red-50' : ''}`}>
-                  <td className="py-3 font-mono text-sm">{item.codigo}</td>
                   <td className="py-3">{item.descricao}</td>
                   <td className="py-3 text-gray-600">{TIPO_LABEL[item.tipo]}</td>
                   <td className="py-3">
@@ -229,7 +226,6 @@ export default function ListaEstoque() {
                 <option value="EPI">EPI</option>
               </select>
             </div>
-            <div><label className="label">Código *</label><input className="input" value={novoForm.codigo} onChange={(e) => setNovoForm((p) => ({ ...p, codigo: e.target.value }))} /></div>
             <div><label className="label">Descrição *</label><input className="input" value={novoForm.descricao} onChange={(e) => setNovoForm((p) => ({ ...p, descricao: e.target.value }))} /></div>
             <div><label className="label">Unidade</label><input className="input" value={novoForm.unidade} onChange={(e) => setNovoForm((p) => ({ ...p, unidade: e.target.value }))} /></div>
             <div><label className="label">Quantidade</label><input className="input" type="number" value={novoForm.quantidade} onChange={(e) => setNovoForm((p) => ({ ...p, quantidade: e.target.value }))} /></div>

@@ -94,7 +94,6 @@ export async function lerDocumentoPedido(arquivo: { path: string; originalname: 
 // ---------- Almoxarifado: foto de uma peça/item ----------
 
 export const DadosPecaSchema = z.object({
-  codigo: z.string().nullable().describe('Código/referência da peça, se houver etiqueta ou identificação visível'),
   nome: z.string().nullable().describe('Nome ou descrição da peça'),
   tipo: z.enum(['MATERIA_PRIMA_BRUTA', 'PECA_PRONTA', 'CONSUMIVEL', 'EPI']).nullable().describe('Categoria da peça: MATERIA_PRIMA_BRUTA (chapa, barra, tubo, bobina), PECA_PRONTA (peça/componente já pronto), CONSUMIVEL (eletrodo, disco de corte, lixa, parafuso, etc.) ou EPI (equipamento de proteção individual: luva, óculos, botina, etc.)'),
   quantidade: z.number().nullable().describe('Quantidade visível (contada ou escrita), apenas o número'),
@@ -104,7 +103,7 @@ export const DadosPecaSchema = z.object({
 })
 export type DadosPeca = z.infer<typeof DadosPecaSchema>
 
-const PROMPT_PECA = `Esta é uma foto de uma peça, matéria-prima ou item do almoxarifado de uma empresa de equipamentos em aço inox (Mirainox) — pode ser a peça em si, uma etiqueta, uma nota ou uma embalagem. Extraia: código/referência, nome da peça, categoria/tipo, quantidade, valor unitário, unidade de medida e local de armazenagem (se houver etiqueta de prateleira/local visível).
+const PROMPT_PECA = `Esta é uma foto de uma peça, matéria-prima ou item do almoxarifado de uma empresa de equipamentos em aço inox (Mirainox) — pode ser a peça em si, uma etiqueta, uma nota ou uma embalagem. Extraia: nome da peça, categoria/tipo, quantidade, valor unitário, unidade de medida e local de armazenagem (se houver etiqueta de prateleira/local visível).
 
 Regras:
 - Se um campo não estiver presente ou legível, retorne null — nunca invente.

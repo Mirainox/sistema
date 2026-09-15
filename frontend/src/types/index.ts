@@ -162,7 +162,6 @@ export interface Compra {
 export interface Estoque {
   id: string
   tipo: string
-  codigo: string
   descricao: string
   unidade: string
   quantidade: number
