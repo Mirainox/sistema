@@ -15,7 +15,7 @@ export default function ListaEstoque() {
   const [modalMovimentar, setModalMovimentar] = useState<Estoque | null>(null)
   const [modalCriar, setModalCriar] = useState(false)
   const [movForm, setMovForm] = useState({ tipo: 'ENTRADA', quantidade: '', motivo: '' })
-  const [novoForm, setNovoForm] = useState({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '' })
+  const [novoForm, setNovoForm] = useState({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '', localizacao: '' })
   const [lendoFoto, setLendoFoto] = useState(false)
   const [avisoLeitura, setAvisoLeitura] = useState('')
 
@@ -45,7 +45,7 @@ export default function ListaEstoque() {
       valorUnitario: novoForm.valorUnitario ? Number(novoForm.valorUnitario) : null,
     })
     setModalCriar(false)
-    setNovoForm({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '' })
+    setNovoForm({ tipo: 'MATERIA_PRIMA_BRUTA', codigo: '', descricao: '', unidade: 'un', quantidade: '', quantidadeMinima: '', valorUnitario: '', localizacao: '' })
     setAvisoLeitura('')
     carregar()
   }
@@ -75,11 +75,13 @@ export default function ListaEstoque() {
       } else {
         setNovoForm((p) => ({
           ...p,
+          tipo: data.tipo || p.tipo,
           codigo: data.codigo || p.codigo,
           descricao: data.nome || p.descricao,
           unidade: data.unidade || p.unidade,
           quantidade: data.quantidade != null ? String(data.quantidade) : p.quantidade,
           valorUnitario: data.valor != null ? String(data.valor) : p.valorUnitario,
+          localizacao: data.localizacao || p.localizacao,
         }))
         setAvisoLeitura('🤖 Peça não encontrada no estoque — confira os dados e cadastre.')
         setModalCriar(true)
@@ -233,6 +235,7 @@ export default function ListaEstoque() {
             <div><label className="label">Quantidade</label><input className="input" type="number" value={novoForm.quantidade} onChange={(e) => setNovoForm((p) => ({ ...p, quantidade: e.target.value }))} /></div>
             <div><label className="label">Qtd. Mínima</label><input className="input" type="number" value={novoForm.quantidadeMinima} onChange={(e) => setNovoForm((p) => ({ ...p, quantidadeMinima: e.target.value }))} /></div>
             <div><label className="label">Valor Unitário (R$)</label><input className="input" type="number" step="0.01" value={novoForm.valorUnitario} onChange={(e) => setNovoForm((p) => ({ ...p, valorUnitario: e.target.value }))} /></div>
+            <div><label className="label">Localização</label><input className="input" value={novoForm.localizacao} onChange={(e) => setNovoForm((p) => ({ ...p, localizacao: e.target.value }))} placeholder="Ex.: Prateleira A3" /></div>
             <div className="flex gap-2">
               <button className="btn-primary" onClick={criarItem}>Salvar</button>
               <button className="btn-secondary" onClick={() => { setModalCriar(false); setAvisoLeitura('') }}>Cancelar</button>
